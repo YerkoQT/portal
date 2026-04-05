@@ -1,0 +1,1905 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Portal de Notas · Análisis Numérico 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1117; --bg2:#181c27; --bg3:#1e2333; --bg4:#252b3d;
+  --bdr:rgba(255,255,255,.08); --bdr2:rgba(255,255,255,.14);
+  --txt:#e8eaf0; --mut:#7a82a0;
+  --gold:#f5c842; --gold2:#e8a820;
+  --grn:#3dd68c; --red:#f05b5b; --blu:#4f8ef7;
+  --r:10px; --r2:7px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;font-size:14px;}
+
+.site-header{background:var(--bg2);border-bottom:1px solid var(--bdr);padding:0 1.5rem;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:.7rem;}
+.logo-icon{font-size:1.3rem;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;}
+.logo-text{font-weight:700;font-size:.95rem;}
+.logo-text span{display:block;font-size:.6rem;font-weight:400;color:var(--mut);letter-spacing:.1em;text-transform:uppercase;margin-top:1px;}
+.hdr-badge{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.25rem .75rem;border-radius:20px;background:rgba(245,200,66,.15);color:var(--gold);border:1px solid rgba(245,200,66,.3);}
+
+.tabs-bar{background:var(--bg2);border-bottom:1px solid var(--bdr);display:flex;padding:0 1.5rem;overflow-x:auto;}
+.tab-btn{padding:.7rem 1.1rem;font-size:.75rem;font-weight:600;color:var(--mut);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:all .2s;font-family:'Sora',sans-serif;}
+.tab-btn:hover:not(.on){color:var(--txt);}
+.tab-btn.on{color:var(--gold);border-bottom-color:var(--gold);}
+
+.wrap{max-width:900px;margin:0 auto;padding:1.5rem 1rem 4rem;}
+.screen{display:none;}
+.screen.on{display:block;animation:fadeup .3s ease;}
+@keyframes fadeup{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+.card{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);padding:1.3rem;margin-bottom:1rem;}
+.card-title{font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem;}
+.card-title::after{content:'';flex:1;height:1px;background:var(--bdr);}
+
+.fld{margin-bottom:.85rem;}
+.fld label{display:block;font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin-bottom:.35rem;}
+.fld input,.fld select{width:100%;background:var(--bg3);border:1px solid var(--bdr2);border-radius:var(--r2);padding:.6rem .9rem;font-family:'Sora',sans-serif;font-size:.85rem;color:var(--txt);outline:none;transition:border-color .2s;}
+.fld input:focus,.fld select:focus{border-color:var(--gold);}
+.fld select option{background:var(--bg3);}
+.fld-row{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+
+.btn{padding:.58rem 1.1rem;border-radius:var(--r2);border:1px solid var(--bdr2);background:var(--bg3);color:var(--txt);font-family:'Sora',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn:hover{border-color:var(--gold);color:var(--gold);}
+.btn.primary{background:var(--gold);color:#0f1117;border-color:var(--gold);}
+.btn.primary:hover{background:var(--gold2);border-color:var(--gold2);}
+.btn.danger{border-color:rgba(240,91,91,.4);color:var(--red);}
+.btn.danger:hover{background:rgba(240,91,91,.1);}
+.btn.sm{padding:.35rem .75rem;font-size:.7rem;}
+.btn-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem;}
+
+.msg{padding:.6rem .9rem;border-radius:var(--r2);font-size:.75rem;margin-bottom:.8rem;display:none;}
+.msg.ok{background:rgba(61,214,140,.1);border:1px solid rgba(61,214,140,.3);color:var(--grn);display:block;}
+.msg.err{background:rgba(240,91,91,.1);border:1px solid rgba(240,91,91,.3);color:var(--red);display:block;}
+.msg.info{background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);color:var(--blu);display:block;}
+
+.sbar{display:none;align-items:center;gap:.6rem;padding:.5rem .9rem;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r2);margin-bottom:.8rem;font-size:.73rem;color:var(--mut);}
+.sbar.on{display:flex;}
+.spin{animation:spin .8s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.pill{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-family:'DM Mono',monospace;font-size:.72rem;font-weight:500;}
+.pill.pass{background:rgba(61,214,140,.15);color:var(--grn);}
+.pill.fail{background:rgba(240,91,91,.15);color:var(--red);}
+.pill.pend{background:var(--bg4);color:var(--mut);}
+
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:1rem;}
+.stile{background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r2);padding:.85rem;text-align:center;}
+.sv{font-family:'DM Mono',monospace;font-size:1.3rem;font-weight:700;display:block;margin-bottom:.2rem;}
+.sl{font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.07em;}
+.pgw{background:var(--bg4);border-radius:3px;height:5px;overflow:hidden;margin-top:.3rem;}
+.pgf{height:100%;border-radius:3px;transition:width .5s ease;}
+
+.qzrow{display:grid;grid-template-columns:42px 1fr 70px 80px;align-items:center;gap:.5rem;padding:.45rem .7rem;border-radius:var(--r2);background:var(--bg3);margin-bottom:.3rem;}
+.qztag{font-family:'DM Mono',monospace;font-size:.68rem;font-weight:600;padding:.18rem .4rem;border-radius:3px;background:rgba(245,200,66,.15);color:var(--gold);text-align:center;}
+.qznm{font-size:.78rem;color:var(--mut);}
+
+
+.titem{display:flex;align-items:center;gap:.8rem;padding:.75rem .9rem;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r2);margin-bottom:.4rem;}
+.ticon{font-size:1.4rem;flex-shrink:0;}
+.tinfo{flex:1;overflow:hidden;}
+.tnm{font-weight:600;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tmeta{font-size:.65rem;color:var(--mut);margin-top:.15rem;}
+.tnota{font-family:'DM Mono',monospace;font-size:.95rem;font-weight:700;flex-shrink:0;}
+
+.uzone{border:2px dashed var(--bdr2);border-radius:var(--r);padding:1.3rem 1rem;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+.uzone:hover,.uzone.drag{border-color:var(--gold);background:rgba(245,200,66,.04);}
+.uzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2;}
+.uicon{font-size:1.8rem;margin-bottom:.4rem;}
+.utxt{font-size:.75rem;color:var(--mut);}
+.utxt strong{color:var(--gold);}
+.fprev{display:flex;align-items:center;gap:.6rem;padding:.55rem .8rem;background:rgba(61,214,140,.08);border:1px solid rgba(61,214,140,.25);border-radius:var(--r2);margin-top:.5rem;font-size:.78rem;}
+.fprev .fn{flex:1;font-weight:600;color:var(--grn);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+.dtabs{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap;}
+.dtab{padding:.45rem .9rem;border-radius:var(--r2);font-size:.73rem;font-weight:600;cursor:pointer;border:1px solid var(--bdr2);background:var(--bg3);color:var(--mut);transition:all .2s;}
+.dtab.on{background:var(--gold);color:#0f1117;border-color:var(--gold);}
+
+.tarrow{padding:.8rem .9rem;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r2);margin-bottom:.4rem;}
+.tarrow-top{display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem;flex-wrap:wrap;}
+.tartag{font-size:.65rem;font-weight:700;padding:.2rem .5rem;border-radius:3px;background:var(--bg4);color:var(--mut);text-transform:uppercase;letter-spacing:.06em;}
+.tarnm{font-weight:600;font-size:.82rem;flex:1;}
+
+.slog{background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r2);padding:.7rem .9rem;font-family:'DM Mono',monospace;font-size:.7rem;color:var(--mut);max-height:200px;overflow-y:auto;display:none;}
+.slog.on{display:block;}
+.lok{color:var(--grn);} .lerr{color:var(--red);} .linf{color:var(--blu);}
+
+.aitem{display:flex;align-items:center;gap:.6rem;padding:.4rem .6rem;background:var(--bg4);border-radius:5px;margin-bottom:.25rem;font-size:.78rem;}
+.aitem .an{flex:1;font-weight:600;}
+.aitem .ac{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--mut);}
+
+.movl{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;}
+.movl.hidden{display:none;}
+.modal{background:var(--bg2);border:1px solid var(--bdr2);border-radius:12px;padding:1.7rem;width:min(94vw,520px);max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:.95rem;font-weight:700;margin-bottom:1.2rem;}
+.modal-close{float:right;background:none;border:none;color:var(--mut);font-size:1.1rem;cursor:pointer;margin-top:-.2rem;}
+
+.empty{text-align:center;padding:2rem 1rem;color:var(--mut);}
+.empty-icon{font-size:2rem;margin-bottom:.5rem;display:block;}
+.empty-txt{font-size:.78rem;line-height:1.8;}
+
+
+.ntable{width:100%;border-collapse:collapse;font-size:.72rem;}
+.ntable th{background:var(--bg4);color:var(--mut);padding:.45rem .6rem;text-align:center;font-weight:600;font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;position:sticky;top:0;}
+.ntable th:first-child{text-align:left;}
+.ntable td{padding:.42rem .6rem;border-bottom:1px solid var(--bdr);text-align:center;font-family:'DM Mono',monospace;font-size:.72rem;white-space:nowrap;}
+.ntable td:first-child{text-align:left;font-family:'Sora',sans-serif;font-weight:600;font-size:.75rem;}
+.ntable tr:hover td{background:var(--bg3);}
+.ntable .pass{color:var(--grn);}
+.ntable .fail{color:var(--red);}
+.ntable .mut{color:var(--mut);}
+.ntable .prom-col{background:rgba(245,200,66,.06);font-weight:700;border-left:1px solid rgba(245,200,66,.2);}
+.ntable .fin-col{background:rgba(79,142,247,.06);font-weight:700;border-left:1px solid rgba(79,142,247,.2);}
+.ntable .tcol{background:rgba(61,214,140,.04);border-left:none;}
+.dnot-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:1rem;}
+.dnot-tile{background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r2);padding:.75rem;text-align:center;}
+.dnot-v{font-family:'DM Mono',monospace;font-size:1.1rem;font-weight:700;display:block;margin-bottom:.15rem;color:var(--gold);}
+.dnot-l{font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.07em;}
+@media(max-width:560px){
+  .sgrid{grid-template-columns:repeat(2,1fr);}
+  .fld-row{grid-template-columns:1fr;}
+  .qzrow{grid-template-columns:36px 1fr 60px 72px;}
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo">
+    <span class="logo-icon" id="logo-tap"
+      ontouchstart="startLP(event)" ontouchend="cancelLP()"
+      onmousedown="startLP(event)" onmouseup="cancelLP()" onmouseleave="cancelLP()"
+      oncontextmenu="return false">📊</span>
+    <div class="logo-text">Portal de Notas<span>Análisis Numérico · Gestión 2026</span></div>
+  </div>
+  <span class="hdr-badge" id="hdr-badge">Estudiante</span>
+</header>
+
+<nav class="tabs-bar">
+  <button class="tab-btn on"  id="tab-notas"   onclick="go('notas')">📈 Mis Notas</button>
+  <button class="tab-btn"     id="tab-tareas"  onclick="go('tareas')">📁 Mis Tareas</button>
+  <button class="tab-btn"     id="tab-docente" onclick="go('docente')" style="display:none">🎓 Docente</button>
+</nav>
+
+<div class="wrap">
+
+<!-- MIS NOTAS -->
+<div class="screen on" id="s-notas">
+  <div class="card">
+    <div class="card-title">👤 Identificación</div>
+    <div class="fld-row">
+      <div class="fld"><label>Nombre y Apellido</label><input id="st-name" type="text" placeholder="Juan Carlos Mamani" oninput="onId()"></div>
+      <div class="fld"><label>Carnet de Identidad</label><input id="st-ci" type="text" placeholder="12345678" oninput="onId()"></div>
+    </div>
+    <div id="id-msg" class="msg"></div>
+  </div>
+  <div class="sbar" id="sb-notas"><span class="spin">⟳</span><span id="sb-notas-t">Consultando GitHub…</span><button class="btn sm" style="margin-left:auto" onclick="refreshNotas()">↻</button></div>
+  <div id="notas-wrap" style="display:none">
+    <!-- PROMEDIO FINAL PROMINENTE -->
+    <div id="final-banner" style="margin-bottom:1rem;display:none">
+      <div style="background:linear-gradient(135deg,var(--bg2) 0%,var(--bg3) 100%);border:1px solid var(--bdr2);border-radius:var(--r);padding:1.2rem 1.3rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+        <div style="flex:1;min-width:160px">
+          <div style="font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:.3rem">Promedio Final</div>
+          <div id="final-val" style="font-family:'DM Mono',monospace;font-size:2.4rem;font-weight:700;line-height:1">—</div>
+          <div id="final-estado" style="font-size:.72rem;margin-top:.35rem;font-weight:600">—</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;flex:1;min-width:200px">
+          <div style="background:var(--bg4);border-radius:var(--r2);padding:.7rem;text-align:center">
+            <div id="fb-promq" style="font-family:'DM Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--gold)">—</div>
+            <div style="font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.07em;margin-top:.2rem">Prom. Quizzes</div>
+          </div>
+          <div style="background:var(--bg4);border-radius:var(--r2);padding:.7rem;text-align:center">
+            <div id="fb-promt" style="font-family:'DM Mono',monospace;font-size:1.1rem;font-weight:700;color:var(--blu)">—</div>
+            <div style="font-size:.58rem;color:var(--mut);text-transform:uppercase;letter-spacing:.07em;margin-top:.2rem">Prom. Tareas</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sgrid" id="notas-stats"></div>
+    <div id="extra-banner" style="display:none;margin-bottom:1rem;background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.3);border-radius:var(--r2);padding:.8rem 1rem;display:flex;align-items:center;gap:.8rem">
+      <span style="font-size:1.2rem">⭐</span>
+      <div style="flex:1">
+        <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gold)">Puntos Extra Asignados</div>
+        <div id="extra-motivo" style="font-size:.75rem;color:var(--mut);margin-top:.1rem"></div>
+      </div>
+      <div id="extra-val" style="font-family:'DM Mono',monospace;font-size:1.2rem;font-weight:700;color:var(--gold)">+0.0</div>
+    </div>
+    <div class="card"><div class="card-title">🎯 Notas por Quiz</div><div id="notas-list"></div></div>
+
+    <!-- NOTAS DE TAREAS DEL ESTUDIANTE -->
+    <div class="card" id="notas-tareas-card" style="display:none">
+      <div class="card-title">📁 Mis Tareas Calificadas</div>
+      <div id="notas-tareas-list"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" onclick="refreshNotas()">↻ Actualizar</button>
+      <button class="btn" onclick="clearId()">↩ Cambiar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MIS TAREAS -->
+<div class="screen" id="s-tareas">
+
+  <!-- Identificación única para tareas -->
+  <div class="card">
+    <div class="card-title">👤 Identificación</div>
+    <div class="fld-row">
+      <div class="fld"><label>Nombre y Apellido</label><input id="t-name" type="text" placeholder="Juan Carlos Mamani" oninput="onIdTarea()"></div>
+      <div class="fld"><label>Carnet de Identidad</label><input id="t-ci" type="text" placeholder="12345678" oninput="onIdTarea()"></div>
+    </div>
+    <div id="t-id-msg" class="msg"></div>
+  </div>
+
+  <!-- Panel visible tras identificación -->
+  <div id="tareas-wrap" style="display:none">
+
+    <!-- Entregar tarea -->
+    <div class="card">
+      <div class="card-title">📤 Entregar Tarea</div>
+      <div class="fld"><label>Número de Tarea</label>
+        <select id="t-num">
+          <option value="">— Seleccionar —</option>
+          <option>Tarea 1</option><option>Tarea 2</option><option>Tarea 3</option>
+          <option>Tarea 4</option><option>Tarea 5</option><option>Tarea 6</option>
+          <option>Tarea 7</option><option>Tarea 8</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:.5rem">
+        <div>
+          <div class="uzone" id="zp" ondragover="dov(event,'zp')" ondragleave="dlv(event,'zp')" ondrop="ddr(event,'pdf')">
+            <input type="file" id="fp" accept=".pdf" onchange="pick(this,'pdf')">
+            <div class="uicon">📄</div><div class="utxt"><strong>PDF</strong><br>o arrastra</div>
+          </div>
+          <div id="pp"></div>
+        </div>
+        <div>
+          <div class="uzone" id="zy" ondragover="dov(event,'zy')" ondragleave="dlv(event,'zy')" ondrop="ddr(event,'py')">
+            <input type="file" id="fy" accept=".py,.ipynb" onchange="pick(this,'py')">
+            <div class="uicon">🐍</div><div class="utxt"><strong>Python</strong><br>.py / .ipynb</div>
+          </div>
+          <div id="py2"></div>
+        </div>
+      </div>
+      <div id="sub-msg" class="msg"></div>
+      <div class="sbar" id="sb-sub"><span class="spin">⟳</span><span id="sb-sub-t">Subiendo…</span></div>
+      <div class="btn-row"><button class="btn primary" onclick="submit()">📤 Entregar</button></div>
+    </div>
+
+    <!-- Mis entregas -->
+    <div class="card">
+      <div class="card-title">📋 Mis Entregas</div>
+      <div class="sbar" id="sb-ent"><span class="spin">⟳</span><span id="sb-ent-t">Consultando…</span></div>
+      <div id="ent-list"></div>
+      <div class="btn-row" style="margin-top:.8rem">
+        <button class="btn" onclick="refreshEntregas()">↻ Actualizar</button>
+        <button class="btn" onclick="clearIdTarea()">↩ Cambiar</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- DOCENTE -->
+<div class="screen" id="s-docente">
+  <div id="doc-login" class="card">
+    <div class="card-title">🔐 Acceso Docente</div>
+    <div class="fld"><label>Contraseña</label><input id="doc-pw" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')docLogin()"></div>
+    <div id="doc-login-msg" class="msg"></div>
+    <button class="btn primary" onclick="docLogin()">Ingresar →</button>
+  </div>
+  <div id="doc-panel" style="display:none">
+    <div class="dtabs">
+      <button class="dtab on" id="dt-est"  onclick="dgo('est')">👥 Estudiantes</button>
+      <button class="dtab"    id="dt-notas" onclick="dgo('notas')">📊 Notas</button>
+      <button class="dtab"    id="dt-tar"  onclick="dgo('tar')">📁 Tareas</button>
+      <button class="dtab"    id="dt-quiz" onclick="dgo('quiz')">✏️ Editar Quiz</button>
+      <button class="dtab"    id="dt-extra" onclick="dgo('extra')">⭐ Puntos Extra</button>
+      <button class="dtab"    id="dt-sync" onclick="dgo('sync')">🔄 Sync</button>
+    </div>
+
+    <div id="dp-est">
+      <div class="card">
+        <div class="card-title">🔐 Estudiantes Permitidos</div>
+        <p style="font-size:.73rem;color:var(--mut);margin-bottom:.9rem;line-height:1.7">Solo estudiantes aquí registrados podrán usar el portal. Lista vacía = abierto a todos.</p>
+        <div class="fld-row">
+          <div class="fld"><label>Nombre</label><input id="al-nm" type="text" placeholder="Juan Carlos Mamani"></div>
+          <div class="fld"><label>CI</label><input id="al-ci" type="text" placeholder="12345678" onkeydown="if(event.key==='Enter')addAl()"></div>
+        </div>
+        <div id="al-msg" class="msg"></div>
+        <div class="btn-row">
+          <button class="btn primary" onclick="addAl()">+ Registrar</button>
+          <button class="btn" onclick="importCSV()">📥 CSV</button>
+          <button class="btn" onclick="exportAllowed()">📤 Publicar lista</button>
+          <button class="btn danger" onclick="clrAl()">🗑 Limpiar</button>
+        </div>
+        <div id="al-list" style="margin-top:.9rem"></div>
+      </div>
+    </div>
+
+    <div id="dp-notas" style="display:none">
+      <div class="card">
+        <div class="card-title">📊 Notas por Estudiante</div>
+        <div class="sbar" id="sb-dnot"><span class="spin">⟳</span><span id="sb-dnot-t">Cargando desde GitHub…</span></div>
+        <div id="dnot-stats" style="margin-bottom:1rem"></div>
+        <div style="overflow-x:auto"><div id="dnot-table"></div></div>
+      </div>
+    </div>
+
+    <div id="dp-tar" style="display:none">
+      <div class="card">
+        <div class="card-title">📁 Tareas Entregadas</div>
+        <div class="fld-row" style="margin-bottom:.8rem">
+          <div class="fld" style="margin:0"><label>Buscar</label><input id="s-tar" type="text" placeholder="Nombre o CI…" oninput="renderTar()"></div>
+          <div class="fld" style="margin:0"><label>Filtrar</label>
+            <select id="f-tar" onchange="renderTar()">
+              <option value="">Todas</option>
+              <option>Tarea 1</option><option>Tarea 2</option><option>Tarea 3</option>
+              <option>Tarea 4</option><option>Tarea 5</option>
+              <option>Tarea 6</option><option>Tarea 7</option><option>Tarea 8</option>
+            </select>
+          </div>
+        </div>
+        <div class="sbar" id="sb-tar"><span class="spin">⟳</span><span id="sb-tar-t">Cargando…</span></div>
+        <div id="tar-list"></div>
+      </div>
+    </div>
+
+    <div id="dp-quiz" style="display:none">
+      <div class="card">
+        <div class="card-title">✏️ Editar Notas de Quiz</div>
+        <p style="font-size:.73rem;color:var(--mut);margin-bottom:1rem;line-height:1.7">Modifica o elimina notas individuales guardadas localmente para cualquier estudiante.</p>
+        <div class="fld-row">
+          <div class="fld">
+            <label>Buscar por CI o Nombre</label>
+            <input id="qe-search" type="text" placeholder="CI o nombre…" oninput="renderQuizEditor()">
+          </div>
+          <div class="fld">
+            <label>Filtrar por tema</label>
+            <select id="qe-tema" onchange="renderQuizEditor()">
+              <option value="">Todos</option>
+              <option value="misiles">🚀 Misiles</option>
+              <option value="python">🐍 Python</option>
+              <option value="rk4">⚛️ RK4</option>
+              <option value="series">📐 Series</option>
+              <option value="difin">∂ Dif. Finitas</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row" style="margin-bottom:.8rem">
+          <button class="btn primary" onclick="openQuizMod()">+ Nueva / Editar nota</button>
+        </div>
+        <div id="qe-list"></div>
+      </div>
+    </div>
+
+    <div id="dp-extra" style="display:none">
+      <div class="card">
+        <div class="card-title">⭐ Puntos Extra</div>
+        <p style="font-size:.73rem;color:var(--mut);margin-bottom:1rem;line-height:1.7">Asigna puntos adicionales que se sumarán directamente a la nota final del estudiante.</p>
+        <div class="fld-row">
+          <div class="fld">
+            <label>Buscar Estudiante</label>
+            <input id="ex-search" type="text" placeholder="CI o nombre…" oninput="renderExtraEditor()">
+          </div>
+        </div>
+        <div class="btn-row" style="margin-bottom:.8rem">
+          <button class="btn primary" onclick="openExtraMod()">+ Asignar Puntos Extra</button>
+        </div>
+        <div id="ex-list"></div>
+      </div>
+    </div>
+
+    <div id="dp-sync" style="display:none">
+      <div class="card">
+        <div class="card-title">🔄 Sync GitHub</div>
+        <p style="font-size:.73rem;color:var(--mut);margin-bottom:.9rem;line-height:1.7">Lee todos los issues con labels <code style="background:var(--bg4);padding:.1em .4em;border-radius:3px">quiz-nota</code> y <code style="background:var(--bg4);padding:.1em .4em;border-radius:3px">tarea-entrega</code>.</p>
+        <div class="fld"><label>Token GitHub</label><input id="sy-tok" type="password" placeholder="ghp_…"></div>
+        <div class="fld"><label>Repositorios (separados por coma)</label><input id="sy-rep" type="text" placeholder="usuario/repo1, usuario/repo2"></div>
+        <div id="sy-msg" class="msg"></div>
+        <div class="btn-row" style="margin-bottom:.8rem"><button class="btn primary" onclick="syncGH()">🔄 Sincronizar</button></div>
+        <div class="slog" id="sy-log"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- MODAL CALIFICAR TAREA -->
+<div class="movl hidden" id="modal-cal">
+  <div class="modal" style="width:min(96vw,640px)">
+    <button class="modal-close" onclick="closeMod()">✕</button>
+    <div class="modal-title" id="mc-title">Calificar Tarea</div>
+    <div id="mc-info" style="font-size:.78rem;color:var(--mut);margin-bottom:1rem;line-height:1.6"></div>
+
+    <!-- Visor de archivo -->
+    <div id="mc-viewer" style="display:none;margin-bottom:1rem">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">
+        <span style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)">Vista previa</span>
+        <a id="mc-gh-link" href="#" target="_blank" class="btn sm" style="text-decoration:none;margin-left:auto">🔗 Ver en GitHub</a>
+      </div>
+      <!-- Código Python -->
+      <div id="mc-code-wrap" style="display:none">
+        <pre id="mc-code" style="background:var(--bg);border:1px solid var(--bdr2);border-radius:var(--r2);padding:.9rem 1rem;font-family:'DM Mono',monospace;font-size:.72rem;color:#c9d1d9;max-height:280px;overflow:auto;white-space:pre-wrap;word-break:break-word;line-height:1.7"></pre>
+      </div>
+      <!-- PDF embed -->
+      <div id="mc-pdf-wrap" style="display:none">
+        <iframe id="mc-pdf-frame" style="width:100%;height:340px;border:1px solid var(--bdr2);border-radius:var(--r2);background:#fff" src=""></iframe>
+      </div>
+      <!-- Sin contenido inline -->
+      <div id="mc-nopreview" style="display:none;padding:.8rem;background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r2);font-size:.75rem;color:var(--mut);text-align:center">
+        ⚠️ Vista previa no disponible para este archivo. Usa el enlace GitHub →
+      </div>
+    </div>
+
+    <div class="fld-row">
+      <div class="fld"><label>Nota (0–100)</label><input id="mc-nota" type="number" min="0" max="100" placeholder="85"></div>
+      <div class="fld"><label>Comentario</label><input id="mc-com" type="text" placeholder="Observación…"></div>
+    </div>
+    <div id="mc-msg" class="msg"></div>
+    <div class="btn-row">
+      <button class="btn primary" onclick="saveCal()">💾 Guardar nota</button>
+      <button class="btn" onclick="closeMod()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL PUNTOS EXTRA -->
+<div class="movl hidden" id="modal-extra">
+  <div class="modal" style="width:min(96vw,480px)">
+    <button class="modal-close" onclick="closeExtraMod()">✕</button>
+    <div class="modal-title">⭐ Asignar Puntos Extra</div>
+    <div class="fld-row">
+      <div class="fld"><label>CI del Estudiante</label><input id="me-ci" type="text" placeholder="12345678" oninput="onMeCi()"></div>
+      <div id="me-name-wrap" class="fld" style="display:none"><label>Nombre</label><input id="me-name" type="text" readonly style="color:var(--mut)"></div>
+    </div>
+    <div class="fld-row">
+      <div class="fld"><label>Puntos Extra</label><input id="me-puntos" type="number" step="0.1" placeholder="5.0"></div>
+      <div class="fld"><label>Motivo / Nota</label><input id="me-motivo" type="text" placeholder="Participación, etc."></div>
+    </div>
+    <div id="me-msg" class="msg"></div>
+    <div class="btn-row">
+      <button class="btn primary" onclick="saveExtra()">💾 Guardar</button>
+      <button class="btn danger" onclick="delExtra()">🗑 Borrar</button>
+      <button class="btn" onclick="closeExtraMod()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR NOTA QUIZ -->
+<div class="movl hidden" id="modal-quiz">
+  <div class="modal" style="width:min(96vw,480px)">
+    <button class="modal-close" onclick="closeQuizMod()">✕</button>
+    <div class="modal-title">✏️ Editar Nota de Quiz</div>
+    <div id="mq-info" style="font-size:.78rem;color:var(--mut);margin-bottom:1rem;line-height:1.7"></div>
+    <div class="fld-row">
+      <div class="fld"><label>CI del Estudiante</label><input id="mq-ci" type="text" placeholder="12345678" oninput="onMqCi()"></div>
+      <div id="mq-name-wrap" class="fld" style="display:none"><label>Nombre</label><input id="mq-name" type="text" readonly style="color:var(--mut)"></div>
+    </div>
+    <div class="fld-row">
+      <div class="fld">
+        <label>Tema</label>
+        <select id="mq-tema" onchange="onMqTema()">
+          <option value="">— Seleccionar —</option>
+          <option value="misiles">🚀 Misiles</option>
+          <option value="python">🐍 Python</option>
+          <option value="rk4">⚛️ RK4</option>
+          <option value="series">📐 Series</option>
+          <option value="difin">∂ Dif. Finitas</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label>Quiz</label>
+        <select id="mq-q"><option value="">— Seleccionar —</option></select>
+      </div>
+    </div>
+    <div class="fld-row">
+      <div class="fld"><label>Nota actual</label><input id="mq-cur" type="text" readonly style="color:var(--mut)" placeholder="Sin nota"></div>
+      <div class="fld"><label>Nueva nota (0–100)</label><input id="mq-nueva" type="number" min="0" max="100" placeholder="85"></div>
+    </div>
+    <div id="mq-msg" class="msg"></div>
+    <div class="btn-row">
+      <button class="btn primary" onclick="saveQuizNota()">💾 Guardar</button>
+      <button class="btn danger" onclick="delQuizNota()">🗑 Borrar nota</button>
+      <button class="btn" onclick="closeQuizMod()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ── CONFIG ──────────────────────────────────────────────
+const PASS = 51;
+const DOC_PASS = 'analisis2026';
+// Nombres de quizzes por tema
+// clave: "TEMA:Q" ej. "misiles:1", "python:3"
+const TEMAS = {
+  misiles: { label:'🚀 Misiles', names:{1:'Ec. Movimiento',2:'Masa Variable',3:'Masa Constante',4:'Tsiolkovsky',5:'Param. Beta',6:'Marte',7:'Euler',8:'Verlet',9:'euler_1',10:'verlet_2'} },
+  python:  { label:'🐍 Python',  names:{1:'Tipos y Variables',2:'Arrays',3:'Funciones',4:'Bucles',5:'NumPy',6:'Pandas',7:'Traza',8:'Error',9:'Euler',10:'Derivada'} },
+  rk4:     { label:'⚛️ RK4',     names:{1:'Fund. RK4',2:'RK4 Básico',3:'Carbono-14',4:'Torio-234',5:'Vectorial',6:'Paso h',7:'Cálculo',8:'Conserv.',9:'Código',10:'Orden'} },
+  series:  { label:'📐 Series',  names:{1:'Series Trig.',2:'Coseno',3:'Límites',4:'Centrada',5:'Stencil',6:'Stencil 7p',7:'Taylor',8:'Error',9:'Roll',10:'Log-Log'} },
+  difin:   { label:'∂ Dif. Finitas', names:{1:'Velocidad',2:'Betas',3:'Marte',4:'Masa',5:'Diferencias 1',6:'Euler',7:'Diferencias 2',8:'Verlet',9:'RK4-a',10:'RK4-b'} },
+};
+// Backward compat helper
+const QN = TEMAS.misiles.names;
+
+// Detectar tema desde el campo rec.tema (guardado por el quiz)
+// o desde el título del issue como fallback
+function detectTema(rec){
+  // Prioridad 1: campo tema en el JSON del issue
+  const t=(rec.tema||'').toLowerCase();
+  if(t==='python')  return 'python';
+  if(t==='rk4')     return 'rk4';
+  if(t==='series')  return 'series';
+  if(t==='misiles') return 'misiles';
+  if(t==='difin')   return 'difin';
+  // Prioridad 2: buscar [tema] en el título del issue
+  const title=(rec._title||'');
+  const tm=title.match(/\[Quiz\]\[([a-z]+)\]/i);
+  if(tm){
+    const tk=tm[1].toLowerCase();
+    if(tk==='python')  return 'python';
+    if(tk==='rk4')     return 'rk4';
+    if(tk==='series')  return 'series';
+    if(tk==='misiles') return 'misiles';
+    if(tk==='difin')   return 'difin';
+  }
+  // Prioridad 3: inferir del título
+  const tl=title.toLowerCase();
+  if(tl.includes('python'))  return 'python';
+  if(tl.includes('rk4'))     return 'rk4';
+  if(tl.includes('series')||tl.includes('stencil')) return 'series';
+  if(tl.includes('difin')||tl.includes('diferencias')) return 'difin';
+  return 'misiles'; // default
+}
+
+// ── URL params ───────────────────────────────────────────
+const UP = new URLSearchParams(location.search);
+const tok  = ()=> UP.get('token')  || '';
+const rtok = ()=> UP.get('rtoken') || '';
+const dtok = ()=> UP.get('dtoken') || '';
+const repos = ()=> {
+  const r=UP.get('repos'); if(r) return r.split(',').map(s=>s.trim()).filter(Boolean);
+  const s=UP.get('repo');  return s?[s]:[];
+};
+
+// ── Storage ──────────────────────────────────────────────
+const ls  = k=>{ try{ return JSON.parse(localStorage.getItem(k)||'{}'); }catch{ return {}; } };
+const lsa = k=>{ try{ return JSON.parse(localStorage.getItem(k)||'[]'); }catch{ return []; } };
+const sv  = (k,v)=> localStorage.setItem(k,JSON.stringify(v));
+
+const getNs   = ()=> ls('pn_n');
+// keys: "tema:q"  e.g. "misiles:1", "python:3"
+const getNota = (ci,key)=> getNs()[ci]?.[key];
+const setNota = (ci,key,v)=>{ const n=getNs(); if(!n[ci])n[ci]={}; if(v==null)delete n[ci][key]; else n[ci][key]=parseFloat(v); sv('pn_n',n); };
+const getNames= ()=> ls('pn_nm');
+const svName  = (ci,nm)=>{ const n=getNames(); n[ci]=nm; sv('pn_nm',n); };
+const getAllow = ()=> ls('pn_al');
+const svAllow = o=> sv('pn_al',o);
+const getTGH  = ()=> ls('pn_tgh');  // {ci:[{tarea,filename,type,date,nota,com,url,ghN,_repo}]}
+const svTGH   = o=> sv('pn_tgh',o);
+const getExtra = ()=> ls('pn_ex'); // {ci: {puntos, motivo}}
+const svExtra = o=> sv('pn_ex',o);
+
+
+// ── GitHub helpers ───────────────────────────────────────
+const GH = t=>({ 'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28', ...(t?{'Authorization':'Bearer '+t}:{}) });
+
+async function ghFetch(repo,label,t){
+  const all=[]; let pg=1;
+  while(true){
+    try{
+      const r=await fetch(`https://api.github.com/repos/${repo}/issues?labels=${label}&state=all&per_page=100&page=${pg}`,{headers:GH(t)});
+      if(!r.ok) break;
+      const d=await r.json(); if(!d.length) break;
+      all.push(...d); pg++; if(d.length<100) break;
+    }catch(e){break;}
+  }
+  return all;
+}
+
+async function ghComments(repo,num,t){
+  try{
+    const r=await fetch(`https://api.github.com/repos/${repo}/issues/${num}/comments`,{headers:GH(t)});
+    return r.ok?await r.json():[];
+  }catch(e){return[];}
+}
+
+async function ghComment(repo,num,body,t){
+  const r=await fetch(`https://api.github.com/repos/${repo}/issues/${num}/comments`,{method:'POST',headers:{...GH(t),'Content-Type':'application/json'},body:JSON.stringify({body})});
+  return r.ok;
+}
+
+async function ghCreateIssue(repo,title,body,labels,t){
+  await fetch(`https://api.github.com/repos/${repo}/labels`,{method:'POST',headers:{...GH(t),'Content-Type':'application/json'},body:JSON.stringify({name:labels[0],color:labels[0]==='quiz-nota'?'0075ca':'e4e669'})});
+  const r=await fetch(`https://api.github.com/repos/${repo}/issues`,{method:'POST',headers:{...GH(t),'Content-Type':'application/json'},body:JSON.stringify({title,body,labels})});
+  if(!r.ok){ const e=await r.text().catch(()=>''); throw new Error(`HTTP ${r.status}: ${e.slice(0,120)}`); }
+  return await r.json();
+}
+
+// ── Parse issue ──────────────────────────────────────────
+function parseMeta(issue){
+  const body=issue.body||'';
+  try{ const s=body.indexOf('```json')+7,e=body.indexOf('```',s); if(s>6&&e>s) return JSON.parse(body.slice(s,e).trim()); }catch(e){}
+  const rec={};
+  body.split('\n').filter(l=>l.includes('|')).forEach(row=>{
+    const c=row.split('|').map(s=>s.trim().replace(/\*\*/g,'')).filter(Boolean);
+    if(c.length<2) return;
+    const k=c[0].toLowerCase();
+    if(k.includes('nombre')||k==='name') rec.nm=c[1];
+    if(k==='ci') rec.ci=c[1];
+    if(k.includes('nota')) rec.nota=parseFloat(c[1]);
+    if(k.includes('quiz')) rec.quizzes=c[1];
+    if(k.includes('tarea')) rec.tarea=c[1];
+    if(k.includes('archivo')||k.includes('file')) rec.filename=c[1];
+    if(k.includes('tipo')||k==='type') rec.type=c[1];
+    if(k.includes('fecha')||k==='date') rec.date=c[1];
+  });
+  const t=issue.title||'';
+  const mn=t.match(/(\d+(?:\.\d+)?)%/); if(mn&&!rec.nota) rec.nota=parseFloat(mn[1]);
+  const mc=t.match(/CI:([^\s·\u00B7]+)/); if(mc&&!rec.ci) rec.ci=mc[1].trim();
+  const mname=t.match(/^\[(?:Quiz|Tarea)\]\s+([^·\u00B7]+)/); if(mname&&!rec.nm) rec.nm=mname[1].trim();
+  return rec;
+}
+
+// ── Allowed ──────────────────────────────────────────────
+const isOK  = ci=> { const a=getAllow(); return Object.keys(a).length===0||!!a[ci]; };
+const regNm = ci=> getAllow()[ci]||getNames()[ci]||null;
+
+// ── Status helper ────────────────────────────────────────
+function sb(id,on,txt='',hide=0){
+  const el=document.getElementById(id); if(!el) return;
+  on?el.classList.add('on'):el.classList.remove('on');
+  const te=document.getElementById(id+'-t'); if(te&&txt) te.textContent=txt;
+  if(hide>0) setTimeout(()=>sb(id,false),hide);
+}
+
+// ══════════════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════════════
+function go(tab){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('s-'+tab).classList.add('on');
+  document.getElementById('tab-'+tab).classList.add('on');
+  if(tab==='tareas') loadEntregas();
+  if(tab==='docente') onDocOpen();
+}
+function dgo(tab){
+  ['est','notas','tar','quiz','extra','sync'].forEach(t=>{ 
+    const el = document.getElementById('dp-'+t);
+    const btn = document.getElementById('dt-'+t);
+    if(el) el.style.display = t===tab?'block':'none'; 
+    if(btn) btn.classList.toggle('on',t===tab); 
+  });
+  if(tab==='tar') loadTarDoc();
+  if(tab==='notas') loadDNotasQuiz();
+  if(tab==='quiz') renderQuizEditor();
+  if(tab==='extra') renderExtraEditor();
+}
+
+// ══════════════════════════════════════════════════════════
+//  MIS NOTAS
+// ══════════════════════════════════════════════════════════
+let CCI=null, CNM=null;
+
+function onId(){
+  const nm=document.getElementById('st-name').value.trim();
+  const ci=document.getElementById('st-ci').value.trim();
+  const msg=document.getElementById('id-msg');
+  msg.className='msg'; msg.style.display='none';
+  if(nm.length<3||ci.length<4){ document.getElementById('notas-wrap').style.display='none'; return; }
+  if(!isOK(ci)){ msg.className='msg err'; msg.textContent='Tu CI no está registrado. Contacta al docente.'; msg.style.display='block'; document.getElementById('notas-wrap').style.display='none'; return; }
+  const rn=regNm(ci);
+  if(rn){ const norm=s=>s.toLowerCase().trim().replace(/\s+/g,' '); if(norm(nm)!==norm(rn)){ msg.className='msg err'; msg.textContent='Nombre no coincide con el CI registrado.'; msg.style.display='block'; document.getElementById('notas-wrap').style.display='none'; return; } }
+  CCI=ci; CNM=nm; svName(ci,nm);
+  // Limpiar notas locales de este CI para forzar lectura fresca de GitHub
+  const fresh=getNs(); delete fresh[ci]; sv('pn_n',fresh);
+  renderNotas(); fetchNotas(ci,nm);
+}
+
+function clearId(){ document.getElementById('st-name').value=''; document.getElementById('st-ci').value=''; document.getElementById('notas-wrap').style.display='none'; sb('sb-notas',false); CCI=null; CNM=null; }
+function refreshNotas(){ if(CCI&&CNM) fetchNotas(CCI,CNM); }
+
+async function fetchNotas(ci,nm){
+  const rp=repos(); if(!rp.length){ sb('sb-notas',false); return; }
+  const t=rtok()||tok(); sb('sb-notas',true,'Consultando GitHub…');
+  // Acumular todas las entradas: {key -> {nota, created_at, state}}
+  // Criterio: preferir issues abiertos; entre iguales, el más reciente gana
+  const best={}; // key -> {nota, ts, state}
+  let n=0;
+  for(const repo of rp){
+    const iss=await ghFetch(repo,'quiz-nota',t);
+    for(const i of iss){
+      const m=i.title.match(/CI:([^\s·]+)/); if(!m||m[1].trim()!==ci) continue;
+      const rec=parseMeta(i); if(!rec.nota||isNaN(rec.nota)) continue;
+      if(rec.nm) svName(ci,rec.nm);
+      rec._title=i.title;
+      const nota=parseFloat(rec.nota);
+      const tema=detectTema(rec);
+      const ts=new Date(i.created_at).getTime();
+      const state=i.state||'open';
+      let qs=[];
+      const qstr=String(rec.quizzes||rec.quiz||'');
+      if(qstr) qs=qstr.split(',').map(q=>parseInt(q)).filter(q=>!isNaN(q)&&q>=1&&q<=10);
+      if(!qs.length){
+        const cur=getNs()[ci]||{};
+        for(let q=1;q<=10;q++){
+          if(cur[tema+':'+q]===undefined){qs=[q];break;}
+        }
+      }
+      for(const q of qs){
+        const key=tema+':'+q;
+        const ex=best[key];
+        // Prioridad: open > closed; dentro del mismo estado, el más reciente
+        const exScore=(ex?.state==='open'?1:0)*1e15+(ex?.ts||0);
+        const newScore=(state==='open'?1:0)*1e15+ts;
+        if(!ex||newScore>exScore){ best[key]={nota,ts,state}; }
+      }
+    }
+  }
+  // Aplicar al storage local
+  Object.entries(best).forEach(([key,{nota}])=>{
+    const ex=getNota(ci,key);
+    if(ex===undefined||nota!==ex){setNota(ci,key,nota);n++;}
+  });
+  renderNotas(); sb('sb-notas',true,n>0?`OK: ${n} notas actualizadas`:'Todo al día',3000);
+}
+
+function renderNotas(){
+  if(!CCI){ document.getElementById('notas-wrap').style.display='none'; return; }
+  document.getElementById('notas-wrap').style.display='block';
+  const ci=CCI, no=getNs()[ci]||{};
+
+  // Agrupar notas por tema
+  const byTema={};
+  Object.entries(no).forEach(([key,val])=>{
+    const [tema,q]=key.split(':');
+    if(!byTema[tema]) byTema[tema]=[];
+    byTema[tema].push({q:parseInt(q),val});
+  });
+
+  const qList = window._totalQKeys || Object.keys(no);
+  const tList = (window._totalTKeys || (getTGH()[ci]||[]).map(t=>t.tarea)).sort();
+  const totalQ = qList.length || 1;
+  const totalT = tList.length || 0;
+
+  const sumaQ = qList.reduce((a,key)=>a+(no[key]||0),0);
+  const promQ_ = sumaQ / totalQ;
+
+  const tarObj=getTGH()[ci]||[];
+  const sumaT = tList.reduce((a,tar)=>{
+    const tEntry = tarObj.find(x=>x.tarea===tar && x.nota!==undefined);
+    return a + (tEntry ? tEntry.nota : 0);
+  }, 0);
+  const promT_ = totalT > 0 ? sumaT / totalT : null;
+
+  const extraData = getExtra()[ci] || {puntos:0};
+  const extraPts = parseFloat(extraData.puntos) || 0;
+  const final_ = (promT_ !== null ? (promQ_ + promT_) / 2 : promQ_) + extraPts;
+  const allVals = Object.values(no).filter(v=>!isNaN(v));
+  const totalRendidos = allVals.length;
+  const totalAprobados = allVals.filter(v=>v>=PASS).length;
+  const finalPass=final_!==null&&final_>=PASS;
+
+  // ── Banner promedio final ──────────────────────────────
+  const banner=document.getElementById('final-banner');
+  if(final_!==null){
+    banner.style.display='block';
+    const fv=document.getElementById('final-val');
+    fv.textContent=final_.toFixed(1)+'%';
+    fv.style.color=finalPass?'var(--grn)':'var(--red)';
+    const fe=document.getElementById('final-estado');
+    fe.textContent=finalPass?'✓ APROBADO':'✗ REPROBADO';
+    fe.style.color=finalPass?'var(--grn)':'var(--red)';
+    const fpq=document.getElementById('fb-promq');
+    fpq.textContent=promQ_!==null?promQ_.toFixed(1)+'%':'—';
+    fpq.style.color=promQ_===null?'var(--mut)':promQ_>=PASS?'var(--grn)':'var(--red)';
+    const fpt=document.getElementById('fb-promt');
+    fpt.textContent=promT_!==null?promT_.toFixed(1)+'%':'—';
+    fpt.style.color=promT_===null?'var(--mut)':promT_>=PASS?'var(--grn)':'var(--red)';
+  } else {
+    banner.style.display='none';
+  }
+
+  document.getElementById('notas-stats').innerHTML=`
+    <div class="stile"><span class="sv" style="color:var(--gold)">${totalRendidos}</span><div class="sl">Quizzes</div></div>
+    <div class="stile"><span class="sv" style="color:var(--${promQ_===null?'mut':promQ_>=PASS?'grn':'red'})">${promQ_!==null?promQ_.toFixed(1)+'%':'—'}</span><div class="sl">Prom. Quiz</div></div>
+    <div class="stile"><span class="sv" style="color:var(--grn)">${totalAprobados}</span><div class="sl">Aprobados</div></div>
+    <div class="stile"><span class="sv" style="color:var(--${promT_===null?'mut':promT_>=PASS?'grn':'red'})">${promT_!==null?promT_.toFixed(1)+'%':'—'}</span><div class="sl">Prom. Tareas</div></div>`;
+
+  const exBanner = document.getElementById('extra-banner');
+  if(extraPts > 0){
+    exBanner.style.display = 'flex';
+    document.getElementById('extra-val').textContent = '+' + extraPts.toFixed(1);
+    document.getElementById('extra-motivo').textContent = extraData.motivo || 'Sin motivo especificado';
+  } else {
+    exBanner.style.display = 'none';
+  }
+
+  const temaOrder=['misiles','python','rk4','series','difin'];
+  let html='';
+  for(const tema of temaOrder){
+    const info=TEMAS[tema];
+    const notas=byTema[tema]||[];
+    const tVals=notas.map(n=>n.val).filter(v=>!isNaN(v));
+    const tProm=tVals.length?tVals.reduce((a,b)=>a+b,0)/tVals.length:null;
+    const tPass=tProm!==null&&tProm>=PASS;
+    const tPromTxt=tProm!==null?tProm.toFixed(1)+'%':'—';
+    const tColor=tProm===null?'var(--mut)':tPass?'var(--grn)':'var(--red)';
+    const rendidos=tVals.length;
+
+    html+=`<div style="margin-bottom:.8rem">
+      <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.35rem">
+        <span style="font-size:.72rem;font-weight:700;color:var(--txt)">${info.label}</span>
+        <span style="font-size:.65rem;color:var(--mut)">${rendidos}/${totalQ} rendidos</span>
+        <span style="font-family:'DM Mono',monospace;font-size:.75rem;font-weight:700;color:${tColor};margin-left:auto">${tPromTxt}</span>
+      </div>`;
+
+    for(let q=1;q<=10;q++){
+      const key = tema+':'+q;
+      const isGlobal = (window._totalQKeys||[]).includes(key);
+      const entry=notas.find(n=>n.q===q);
+      let v=entry?entry.val:undefined;
+      if(v===undefined && isGlobal) v = 0;
+      if(v===undefined) continue;
+      const cls=v>=PASS?'pass':'fail';
+      const nd=v.toFixed(1)+'%';
+      const nm=info.names[q]||'Quiz '+q;
+      html+=`<div class="qzrow">
+        <span class="qztag">Q${q}</span>
+        <span class="qznm">${nm}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:.85rem;text-align:center;color:var(--${cls==='pass'?'grn':'red'})">${nd}</span>
+        <span class="pill ${cls}">${v>=PASS?'Aprobado':'Reprobado'}</span>
+      </div>`;
+    }
+    html+='</div>';
+  }
+  document.getElementById('notas-list').innerHTML=html;
+
+  // ── Notas de tareas del estudiante ───────────────────────
+  const tarCard=document.getElementById('notas-tareas-card');
+  const tarListEl=document.getElementById('notas-tareas-list');
+  const tTitles = ls('pn_tt');
+  if(tList.length>0){
+    tarCard.style.display='block';
+    tarListEl.innerHTML=tList.map(tar=>{
+      const e = tarObj.find(x=>x.tarea===tar);
+      const v = (e && e.nota!==undefined) ? e.nota : null;
+      const label = tTitles[tar] || tar;
+      const comHTML = (e && e.com) ? `<div style="font-size:.68rem;color:var(--mut);margin-top:.3rem">💬 ${e.com}</div>` : '';
+      return `
+      <div class="tarrow">
+        <div class="tarrow-top">
+          <span class="tartag">${e && e.type==='py'?'🐍':'📄'} ${e ? (e.type||'pdf').toUpperCase() : 'PDF'}</span>
+          <span class="tarnm">${label}</span>
+          ${v!==null ? `<span class="pill ${v>=PASS?'pass':'fail'}">${v.toFixed(1)}%</span>` : `<span class="pill pend">Sin nota</span>`}
+          ${e && e.url ? `<a href="${e.url}" target="_blank" class="btn sm" style="text-decoration:none" title="Ver en GitHub">🔗</a>` : ''}
+        </div>
+        <div style="font-size:.68rem;color:var(--mut)">${e ? e.filename+' · '+e.date : 'No entregada'}</div>
+        ${comHTML}
+      </div>`;
+    }).join('');
+  } else {
+    tarCard.style.display='none';
+  }
+}
+// ══════════════════════════════════════════════════════════
+let PF={pdf:null,py:null};
+
+function pick(inp,tp){ const f=inp.files[0]; if(!f) return; if(f.size>10*1024*1024){alert('Max 10 MB');inp.value='';return;} PF[tp]={name:f.name,size:f.size,file:f}; prevFile(tp); }
+function prevFile(tp){
+  const el=document.getElementById(tp==='pdf'?'pp':'py2'), f=PF[tp];
+  if(!f){el.innerHTML='';return;}
+  const sz=f.size>1048576?(f.size/1048576).toFixed(1)+' MB':(f.size/1024).toFixed(1)+' KB';
+  el.innerHTML=`<div class="fprev"><span>${tp==='pdf'?'📄':'🐍'}</span><span class="fn">${f.name}</span><span style="color:var(--mut);font-size:.65rem">${sz}</span><button style="background:none;border:none;cursor:pointer;color:var(--red);padding:.1rem .3rem" onclick="rmFile('${tp}')">✕</button></div>`;
+}
+function rmFile(tp){ PF[tp]=null; document.getElementById(tp==='pdf'?'pp':'py2').innerHTML=''; document.getElementById(tp==='pdf'?'fp':'fy').value=''; }
+function dov(e,id){e.preventDefault();document.getElementById(id).classList.add('drag');}
+function dlv(e,id){document.getElementById(id).classList.remove('drag');}
+function ddr(e,tp){e.preventDefault();const id=tp==='pdf'?'zp':'zy';document.getElementById(id).classList.remove('drag');const f=e.dataTransfer.files[0];if(!f)return;PF[tp]={name:f.name,size:f.size,file:f};prevFile(tp);}
+
+async function submit(){
+  const nm=CCI_T?CNM_T:document.getElementById('t-name').value.trim();
+  const ci=CCI_T||document.getElementById('t-ci').value.trim();
+  const tar=document.getElementById('t-num').value;
+  const msg=document.getElementById('sub-msg');
+  msg.className='msg'; msg.style.display='none';
+  if(!nm||!ci||!tar){msg.className='msg err';msg.textContent='Completa todos los campos.';msg.style.display='block';return;}
+  if(!PF.pdf&&!PF.py){msg.className='msg err';msg.textContent='Adjunta al menos un archivo.';msg.style.display='block';return;}
+  if(!isOK(ci)){msg.className='msg err';msg.textContent='CI no registrado. Contacta al docente.';msg.style.display='block';return;}
+  const t=tok(), rp=repos();
+  if(!t||!rp.length){msg.className='msg err';msg.textContent='Falta ?token= o ?repos= en la URL.';msg.style.display='block';return;}
+  sb('sb-sub',true,'Subiendo a GitHub…');
+  const repo=rp[0], date=new Date().toLocaleString('es-BO');
+  let ok=0;
+  for(const tp of ['pdf','py']){
+    const pf=PF[tp]; if(!pf) continue;
+    try{
+      const prev=tp==='py'?await pf.file.text():'(ver issue)';
+      const jd=JSON.stringify({ci,name:nm,tarea:tar,filename:pf.name,type:tp,date});
+      const NL='\n';
+      const body=['## Entrega — '+tar,NL,'| Campo | Valor |','|---|---|','| **Nombre** | '+nm+' |','| **CI** | '+ci+' |','| **Tarea** | '+tar+' |','| **Archivo** | '+pf.name+' |','| **Tipo** | '+tp.toUpperCase()+' |','| **Fecha** | '+date+' |',NL,tp==='py'?'```python\n'+prev.slice(0,3000)+'\n```':'> PDF: '+pf.name,NL,'```json',jd,'```'].join(NL);
+      await ghCreateIssue(repo,'[Tarea] '+nm+' · CI:'+ci+' · '+tar+' · '+tp.toUpperCase()+' · '+date,body,['tarea-entrega'],t);
+      ok++;
+    }catch(err){sb('sb-sub',false);msg.className='msg err';msg.textContent='Error: '+err.message;msg.style.display='block';return;}
+  }
+  sb('sb-sub',true,'Subido correctamente',3000);
+  msg.className='msg ok';msg.textContent='Tarea enviada a GitHub.';msg.style.display='block';
+  PF={pdf:null,py:null};['pp','py2'].forEach(id=>document.getElementById(id).innerHTML='');['fp','fy'].forEach(id=>document.getElementById(id).value='');
+  loadEntregas();
+}
+
+let CCI_T=null, CNM_T=null;
+
+function onIdTarea(){
+  const nm=document.getElementById('t-name').value.trim();
+  const ci=document.getElementById('t-ci').value.trim();
+  const msg=document.getElementById('t-id-msg');
+  msg.className='msg'; msg.style.display='none';
+  if(nm.length<3||ci.length<4){
+    document.getElementById('tareas-wrap').style.display='none'; return;
+  }
+  if(!isOK(ci)){
+    msg.className='msg err'; msg.textContent='Tu CI no está registrado. Contacta al docente.'; msg.style.display='block';
+    document.getElementById('tareas-wrap').style.display='none'; return;
+  }
+  const rn=regNm(ci);
+  if(rn){
+    const norm=s=>s.toLowerCase().trim().replace(/\s+/g,' ');
+    if(norm(nm)!==norm(rn)){
+      msg.className='msg err'; msg.textContent='Nombre no coincide con el CI registrado.'; msg.style.display='block';
+      document.getElementById('tareas-wrap').style.display='none'; return;
+    }
+  }
+  CCI_T=ci; CNM_T=nm; svName(ci,nm);
+  document.getElementById('tareas-wrap').style.display='block';
+  _loadEntregas(ci,nm);
+}
+
+function clearIdTarea(){
+  document.getElementById('t-name').value='';
+  document.getElementById('t-ci').value='';
+  document.getElementById('tareas-wrap').style.display='none';
+  document.getElementById('t-id-msg').className='msg';
+  document.getElementById('t-id-msg').style.display='none';
+  sb('sb-ent',false); CCI_T=null; CNM_T=null;
+}
+
+function refreshEntregas(){
+  if(CCI_T&&CNM_T) _loadEntregas(CCI_T,CNM_T);
+}
+
+function loadEntregas(){
+  // Llamado al cambiar de tab — usa CCI_T si ya está identificado
+  if(CCI_T&&CNM_T) _loadEntregas(CCI_T,CNM_T);
+}
+
+async function _loadEntregas(ci,nm){
+  const rp=repos(), t=rtok()||tok();
+  const el=document.getElementById('ent-list');
+
+  // Mostrar caché local primero (respuesta inmediata)
+  const cached=(getTGH()[ci]||[]);
+  if(cached.length) renderEntregas(cached);
+
+  if(!rp.length){
+    if(!cached.length) el.innerHTML='<div class="empty"><span class="empty-icon">⚙️</span><div class="empty-txt">Configura ?repos= en la URL.</div></div>';
+    return;
+  }
+  sb('sb-ent',true,'Consultando GitHub…');
+  const map={};
+  const tgh=getTGH();
+  if(!tgh[ci]) tgh[ci]=[];
+
+  for(const repo of rp){
+    const iss=await ghFetch(repo,'tarea-entrega',t);
+    for(const i of iss){
+      const m=i.title.match(/CI:([^\s·]+)/); if(!m||m[1].trim()!==ci) continue;
+      const rec=parseMeta(i);
+      let nota=undefined, com='';
+      const cms=await ghComments(repo,i.number,t);
+      for(const c of [...cms].reverse()){
+        const mn=(c.body||'').match(/[Nn]ota[:\s]+(\d+(?:\.\d+)?)/);
+        if(mn){nota=parseFloat(mn[1]);com=c.body.replace(/[Nn]ota[:\s]+\d+(?:\.\d+)?/,'').trim();break;}
+      }
+      const key=(rec.tarea||'?')+'|'+(rec.filename||i.title)+'|'+(rec.type||'pdf');
+      map[key]={tarea:rec.tarea||'Tarea',filename:rec.filename||i.title,type:rec.type||'pdf',date:rec.date||new Date(i.created_at).toLocaleString('es-BO'),nota,com,url:i.html_url,ghN:i.number,_repo:repo};
+    }
+  }
+
+  // Actualizar caché local con datos frescos
+  const entries=Object.values(map);
+  tgh[ci]=entries; svTGH(tgh);
+
+  sb('sb-ent',false);
+  if(!entries.length){
+    el.innerHTML='<div class="empty"><span class="empty-icon">📂</span><div class="empty-txt">No hay entregas aún.</div></div>';
+    return;
+  }
+  renderEntregas(entries.sort((a,b)=>a.tarea.localeCompare(b.tarea)));
+}
+
+function renderEntregas(entries){
+  const tTitles = ls('pn_tt');
+  document.getElementById('ent-list').innerHTML=entries.map(e=>{
+    const comHTML = e.com ? `<div style="font-size:.68rem;color:var(--mut);margin-top:.3rem">💬 ${e.com}</div>` : '';
+    return `
+    <div class="tarrow">
+      <div class="tarrow-top">
+        <span class="tartag">${e.type==='pdf'?'📄':'🐍'} ${(e.type||'pdf').toUpperCase()}</span>
+        <span class="tarnm">${tTitles[e.tarea]||e.tarea}</span>
+        ${e.nota!==undefined?`<span class="pill ${e.nota>=PASS?'pass':'fail'}">${e.nota.toFixed(1)}%</span>`:`<span class="pill pend">Sin nota</span>`}
+        <a href="${e.url}" target="_blank" class="btn sm" style="text-decoration:none" title="Ver en GitHub">🔗</a>
+      </div>
+      <div style="font-size:.68rem;color:var(--mut)">${e.filename} · ${e.date}</div>
+      ${comHTML}
+    </div>`;
+  }).join('');
+}
+
+
+// ══════════════════════════════════════════════════════════
+//  DOCENTE
+// ══════════════════════════════════════════════════════════
+let docOK=false;
+
+function docLogin(){
+  const p=document.getElementById('doc-pw').value;
+  const msg=document.getElementById('doc-login-msg');
+  if(p===DOC_PASS||dtok()){
+    docOK=true;
+    document.getElementById('doc-login').style.display='none';
+    document.getElementById('doc-panel').style.display='block';
+    document.getElementById('hdr-badge').textContent='Docente';
+    renderAl();
+  } else { msg.className='msg err'; msg.textContent='Contraseña incorrecta.'; msg.style.display='block'; }
+}
+function onDocOpen(){ if(!docOK&&dtok()) docLogin(); }
+
+// Allowed
+function addAl(){
+  const nm=document.getElementById('al-nm').value.trim(), ci=document.getElementById('al-ci').value.trim(), msg=document.getElementById('al-msg');
+  if(!nm||!ci){msg.className='msg err';msg.textContent='Completa nombre y CI.';msg.style.display='block';return;}
+  const a=getAllow(); if(a[ci]){msg.className='msg err';msg.textContent=`CI ${ci} ya existe como "${a[ci]}".`;msg.style.display='block';return;}
+  a[ci]=nm; svAllow(a);
+  msg.className='msg ok'; msg.textContent=`${nm} (CI:${ci}) registrado.`; msg.style.display='block';
+  document.getElementById('al-nm').value=''; document.getElementById('al-ci').value='';
+  renderAl(); setTimeout(()=>{msg.style.display='none';},3000);
+}
+function rmAl(ci){ if(!confirm(`Eliminar CI ${ci}?`)) return; const a=getAllow(); delete a[ci]; svAllow(a); renderAl(); }
+function clrAl(){ if(!confirm('Limpiar lista? El sistema quedará abierto a todos.')) return; svAllow({}); renderAl(); }
+function renderAl(){
+  const el=document.getElementById('al-list'); if(!el) return;
+  const a=getAllow(), es=Object.entries(a);
+  if(!es.length){el.innerHTML='<div style="font-size:.72rem;color:var(--mut)">Lista vacía — abierto a todos.</div>';return;}
+  el.innerHTML=`<div style="font-size:.65rem;color:var(--mut);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.08em">${es.length} estudiante${es.length>1?'s':''}</div>`+
+  es.map(([ci,nm])=>`<div class="aitem"><span class="an">${nm}</span><span class="ac">CI: ${ci}</span><button onclick="rmAl('${ci}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:.8rem;padding:.1rem .4rem">✕</button></div>`).join('');
+}
+function importCSV(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.csv,.txt';
+  inp.onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const txt=await f.text(); const a=getAllow(); let n=0;
+    txt.split(/\r?\n/).forEach(l=>{ if(!l.trim()||l.startsWith('#')) return; const p=l.split(',').map(s=>s.trim().replace(/^"|"$/g,'')); if(p.length<2) return; const [nm,ci]=p; if(!nm||!ci||a[ci]) return; a[ci]=nm; n++; });
+    svAllow(a); renderAl();
+    const msg=document.getElementById('al-msg'); msg.className='msg ok'; msg.textContent=`${n} importados.`; msg.style.display='block';
+  }; inp.click();
+}
+
+
+// ══════════════════════════════════════════════════════════
+//  DOCENTE — NOTAS QUIZ
+//  Carga todos los issues quiz-nota de GitHub, construye
+//  tabla por estudiante con promedios y calificación final.
+//
+//  Definiciones:
+//  - totalQ = nro de quizzes distintos que al menos UN
+//             estudiante haya respondido
+//  - totalT = nro de tareas distintas calificadas (al menos
+//             una calificada en el sistema)
+//  - promQ(ci) = suma notas ci / totalQ  (no rendidos = 0)
+//  - promT(ci) = suma notas tareas ci / totalT
+//  - final(ci) = (promQ + promT) / 2  si ambos existen
+// ══════════════════════════════════════════════════════════
+let dNotasData = null; // {students:{ci:{name,quizzes:{q:nota}}}, tareas:{ci:{tarea:nota}}}
+
+async function loadDNotasQuiz(){
+  const rp=repos(), t=dtok()||tok();
+  if(!rp.length){
+    document.getElementById('dnot-table').innerHTML='<div class="empty"><span class="empty-icon">⚙️</span><div class="empty-txt">Configura ?repos= en la URL.</div></div>';
+    return;
+  }
+  sb('sb-dnot',true,'Cargando desde GitHub…');
+
+  const students = {}; // {ci:{name,quizzes:{q:nota}}}
+  const tarNotas  = {}; // {ci:{tarea:nota}} — de tareas calificadas
+
+  // ── 1. Leer issues quiz-nota ─────────────────────────
+  for(const repo of rp){
+    const iss=await ghFetch(repo,'quiz-nota',t);
+    for(const i of iss){
+      const rec=parseMeta(i);
+      if(!rec.ci||!rec.nota||isNaN(rec.nota)) continue;
+      const ci=rec.ci.trim();
+      if(!students[ci]) students[ci]={name:rec.nm||getNames()[ci]||ci, quizzes:{}};
+      if(rec.nm) students[ci].name=rec.nm;
+      const nota=parseFloat(rec.nota);
+      let qs=[];
+      const qstr=String(rec.quizzes||rec.quiz||'');
+      if(qstr) qs=qstr.split(',').map(q=>parseInt(q)).filter(q=>!isNaN(q)&&q>=1&&q<=10);
+      if(!qs.length){
+        // Asignar al primer slot libre de este estudiante
+        // Slot libre por tema para evitar mezclar temas
+        rec._title=i.title;
+        const tema=detectTema(rec);
+        let sl=1; while(students[ci].quizzes[tema+':'+sl]!==undefined&&sl<=10) sl++;
+        if(sl<=10) qs=[sl];
+      }
+      if(!rec._title) rec._title=i.title;
+      const tema=detectTema(rec);
+      for(const q of qs){
+        const key=tema+':'+q;
+        const ex=students[ci].quizzes[key];
+        if(ex===undefined||nota>ex) students[ci].quizzes[key]=nota;
+      }
+    }
+  }
+
+  // ── 2. Leer issues tarea-entrega (para promedio tareas) ──
+  for(const repo of rp){
+    const iss=await ghFetch(repo,'tarea-entrega',t);
+    for(const i of iss){
+      const rec=parseMeta(i);
+      if(!rec.ci||!rec.tarea) continue;
+      const ci=rec.ci.trim();
+      if(!tarNotas[ci]) tarNotas[ci]={};
+      // Leer nota del comentario más reciente
+      const cms=await ghComments(repo,i.number,t);
+      for(const c of [...cms].reverse()){
+        const mn=(c.body||'').match(/[Nn]ota[:\s]+(\d+(?:\.\d+)?)/);
+        if(mn){
+          const nota=parseFloat(mn[1]);
+          const prev=tarNotas[ci][rec.tarea];
+          if(prev===undefined||nota>prev) tarNotas[ci][rec.tarea]=nota;
+          break;
+        }
+      }
+    }
+  }
+
+  dNotasData={students,tareas:tarNotas};
+  sb('sb-dnot',false);
+  renderDNotasQuiz();
+}
+
+function renderDNotasQuiz(){
+  if(!dNotasData){
+    document.getElementById('dnot-table').innerHTML='<div class="empty"><span class="empty-icon">📊</span><div class="empty-txt">Presiona cargar para ver las notas.</div></div>';
+    return;
+  }
+  const {students,tareas}=dNotasData;
+
+  // Unión de CIs con quiz Y/O tarea calificada, filtrada por lista blanca
+  const allowed=getAllow();
+  const hasWL=Object.keys(allowed).length>0;
+  const ciUnion=new Set([
+    ...Object.keys(students),
+    ...Object.keys(tareas)
+  ]);
+  const ciList=[...ciUnion].filter(ci=>!hasWL||!!allowed[ci]);
+
+  // Asegurar que todo CI tenga entrada en students (aunque sea vacía)
+  ciList.forEach(ci=>{
+    if(!students[ci]) students[ci]={name:getNames()[ci]||allowed[ci]||'CI:'+ci, quizzes:{}};
+  });
+
+  if(!ciList.length){
+    document.getElementById('dnot-table').innerHTML='<div class="empty"><span class="empty-icon">📊</span><div class="empty-txt">Sin datos. Registra estudiantes o usa Sync.</div></div>';
+    return;
+  }
+
+  // ── totalQ: quizzes por tema respondidos por al menos 1 estudiante ──
+  // Recopilar todas las keys "tema:q" presentes
+  const allKeys=new Set();
+  ciList.forEach(ci=>Object.keys(students[ci].quizzes).forEach(k=>allKeys.add(k)));
+  // Ordenar: primero por tema (orden canónico), luego por q
+  const temaOrder2=['misiles','python','rk4','series','difin'];
+  const qList=[...allKeys].sort((a,b)=>{
+    const [ta,qa]=a.split(':'); const [tb,qb]=b.split(':');
+    const ti=temaOrder2.indexOf(ta), tj=temaOrder2.indexOf(tb);
+    return ti!==tj?ti-tj:parseInt(qa)-parseInt(qb);
+  });
+  const totalQ=qList.length||1;
+
+  // ── totalT: tareas con al menos 1 nota en el sistema ───────
+  // tareas = {ci: {tarea: mejorNota}}
+  // tSet = todas las tareas que tienen nota en algún estudiante
+  const tSet=new Set();
+  Object.entries(tareas).forEach(([ci,tobj])=>{
+    if(!hasWL||allowed[ci]) Object.keys(tobj).forEach(tar=>tSet.add(tar));
+  });
+  const totalT=tSet.size||0;
+  // Lista ordenada de tareas: Tarea 1, Tarea 2, ...
+  const tList=[...tSet].sort((a,b)=>{
+    const na=parseInt(a.replace(/\D/g,'')), nb=parseInt(b.replace(/\D/g,''));
+    return isNaN(na)||isNaN(nb)?a.localeCompare(b):na-nb;
+  });
+
+  // ── Calcular promedios por estudiante ───────────────────────
+  const rows=ciList.map(ci=>{
+    const qs=students[ci].quizzes;
+    // promQ: quizzes no rendidos = 0, dividir entre totalQ
+    const sumaQ=qList.reduce((a,key)=>a+(qs[key]||0),0);
+    const promQ=sumaQ/totalQ;
+    // promT: tareas no entregadas/calificadas = 0, dividir entre totalT
+    const tarObj=tareas[ci]||{};
+    const sumaT=tList.reduce((a,tar)=>a+(tarObj[tar]||0),0);
+    const promT=totalT>0?sumaT/totalT:null;
+    const exData = getExtra()[ci] || {puntos:0};
+    const exPts = parseFloat(exData.puntos) || 0;
+    const final=(promT!==null?(promQ+promT)/2:promQ) + exPts;
+    return {ci, name:students[ci].name, qs, tarObj, promQ, promT, final, exPts};
+  }).sort((a,b)=>b.final-a.final);
+
+  // ── Estadísticas globales ───────────────────────────────────
+  const aprob=rows.filter(r=>r.final>=PASS).length;
+  const avgFinal=rows.reduce((a,r)=>a+r.final,0)/rows.length;
+  document.getElementById('dnot-stats').innerHTML=`
+    <div class="dnot-sum">
+      <div class="dnot-tile"><span class="dnot-v">${rows.length}</span><div class="dnot-l">Estudiantes</div></div>
+      <div class="dnot-tile"><span class="dnot-v" style="color:var(--grn)">${aprob}</span><div class="dnot-l">Aprobados (&ge;${PASS}%)</div></div>
+      <div class="dnot-tile"><span class="dnot-v">${avgFinal.toFixed(1)}%</span><div class="dnot-l">Prom. General</div></div>
+    </div>
+    <div style="font-size:.65rem;color:var(--mut);margin-bottom:.5rem">
+      Quizzes en sistema: <strong style="color:var(--txt)">${totalQ}</strong>
+      ${totalT>0?` &nbsp;·&nbsp; Tareas calificadas: <strong style="color:var(--txt)">${totalT}</strong>`:''}
+      &nbsp;·&nbsp; No respondido/entregado = 0
+    </div>`;
+
+  // ── Construir tabla ─────────────────────────────────────────
+  // Cabecera: Estudiante | Q1 Q2... | T1 T2... | Prom.Quiz | Prom.Tareas | Final
+  const thQ=qList.map(key=>{
+    const [tema,q]=key.split(':');
+    const info=TEMAS[tema]||{names:{}};
+    const nm=info.names[parseInt(q)]||'Q'+q;
+    const short=tema.charAt(0).toUpperCase()+tema.slice(1,3)+q;
+    return `<th title="${nm} (${tema})" style="font-size:.58rem">${short}</th>`;
+  }).join('');
+  const thT=tList.map(tar=>{
+    const short=tar.replace('Tarea ','T');
+    return `<th class="tcol" title="${tar}">${short}</th>`;
+  }).join('');
+
+  const thead=`<thead><tr>
+    <th style="text-align:left;min-width:140px">Estudiante</th>
+    ${thQ}
+    ${thT}
+    <th class="prom-col">Prom.Q</th>
+    ${totalT>0?'<th class="prom-col">Prom.T</th>':''}
+    <th style="color:var(--gold);font-size:.6rem">Extra</th>
+    <th class="fin-col">Final</th>
+  </tr></thead>`;
+
+  const tbody=rows.map(r=>{
+    // Celdas quizzes
+    const tdQ=qList.map(key=>{
+      const v=r.qs[key];
+      if(v===undefined) return `<td class="mut">—</td>`;
+      return `<td class="${v>=PASS?'pass':'fail'}">${v.toFixed(1)}</td>`;
+    }).join('');
+    // Celdas tareas
+    const tdT=tList.map(tar=>{
+      const v=r.tarObj[tar];
+      if(v===undefined) return `<td class="tcol mut">—</td>`;
+      return `<td class="tcol ${v>=PASS?'pass':'fail'}">${v.toFixed(1)}</td>`;
+    }).join('');
+    const pqCls=r.promQ>=PASS?'pass':'fail';
+    const ptCell=totalT>0?(r.promT!==null?`<td class="prom-col ${r.promT>=PASS?'pass':'fail'}">${r.promT.toFixed(1)}%</td>`:`<td class="prom-col mut">—</td>`):'' ;
+    const fCls=r.final>=PASS?'pass':'fail';
+    return `<tr>
+      <td title="CI: ${r.ci}">${r.name}<br><span style="font-size:.6rem;color:var(--mut);font-family:'DM Mono',monospace">CI:${r.ci}</span></td>
+      ${tdQ}
+      ${tdT}
+      <td class="prom-col ${pqCls}">${r.promQ.toFixed(1)}%</td>
+      ${ptCell}
+      <td style="color:var(--gold)">${r.exPts > 0 ? '+'+r.exPts.toFixed(1) : '—'}</td>
+      <td class="fin-col ${fCls}" style="font-size:.8rem">${r.final.toFixed(1)}%</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('dnot-table').innerHTML=
+    `<table class="ntable">${thead}<tbody>${tbody}</tbody></table>`;
+}
+
+
+
+
+// ── Publicar allowed.json en GitHub (para que los quizzes lo lean) ──
+async function exportAllowed(){
+  const a=getAllow(), es=Object.entries(a);
+  if(!es.length){ alert('La lista está vacía. Registra estudiantes primero.'); return; }
+  const t=dtok()||tok();
+  const rp=repos();
+  if(!t||!rp.length){ alert('Falta ?dtoken= o ?repos= en la URL.'); return; }
+  const repo=rp[0];
+  const data={ updated:new Date().toISOString(), students:es.map(([ci,name])=>({ci,name})) };
+  const content=btoa(unescape(encodeURIComponent(JSON.stringify(data,null,2))));
+  let sha=null;
+  try{
+    const r=await fetch(`https://api.github.com/repos/${repo}/contents/allowed.json`,{headers:GH(t)});
+    if(r.ok){ const d=await r.json(); sha=d.sha; }
+  }catch(e){}
+  const body={message:`Lista de estudiantes (${es.length})`,content};
+  if(sha) body.sha=sha;
+  const r=await fetch(`https://api.github.com/repos/${repo}/contents/allowed.json`,{
+    method:'PUT',headers:{...GH(t),'Content-Type':'application/json'},body:JSON.stringify(body)
+  });
+  const msg=document.getElementById('al-msg');
+  if(r.ok){
+    msg.className='msg ok';
+    msg.textContent=`\u2713 allowed.json publicado en ${repo} con ${es.length} estudiantes.`;
+    msg.style.display='block';
+    setTimeout(()=>{msg.style.display='none';},4000);
+  } else {
+    const err=await r.text().catch(()=>'');
+    msg.className='msg err';
+    msg.textContent='Error al publicar: HTTP '+((await r.json().catch(()=>({status:r.status}))).message||r.status);
+    msg.style.display='block';
+  }
+}
+
+// Tareas docente
+let tarCache=[];
+async function loadTarDoc(){
+  const rp=repos(), t=dtok()||tok();
+  if(!rp.length){renderTar();return;}
+  sb('sb-tar',true,'Cargando desde GitHub…');
+  const all=[];
+  for(const repo of rp){
+    const iss=await ghFetch(repo,'tarea-entrega',t);
+    for(const i of iss){
+      i._repo=repo;
+      const rec=parseMeta(i); if(!rec.ci) continue;
+      let nota=undefined, com='';
+      const cms=await ghComments(repo,i.number,t);
+      for(const c of [...cms].reverse()){ const mn=(c.body||'').match(/[Nn]ota[:\s]+(\d+(?:\.\d+)?)/); if(mn){nota=parseFloat(mn[1]);com=c.body.replace(/[Nn]ota[:\s]+\d+(?:\.\d+)?/,'').trim().slice(0,100);break;} }
+      // Solo mostrar tareas de estudiantes en la lista blanca
+      const alw=getAllow();
+      if(Object.keys(alw).length>0&&!alw[rec.ci]) continue;
+      all.push({ci:rec.ci,name:rec.nm||getNames()[rec.ci]||rec.ci,tarea:rec.tarea||'Tarea',filename:rec.filename||i.title,type:rec.type||'pdf',date:rec.date||new Date(i.created_at).toLocaleString('es-BO'),nota,com,ghN:i.number,url:i.html_url,fileUrl:rec.url,_repo:repo});
+    }
+  }
+  tarCache=all; sb('sb-tar',false); renderTar();
+}
+
+function renderTar(){
+  const el=document.getElementById('tar-list');
+  const q=(document.getElementById('s-tar').value||'').toLowerCase();
+  const f=document.getElementById('f-tar').value;
+  let list=tarCache;
+  if(q) list=list.filter(t=>t.name.toLowerCase().includes(q)||t.ci.includes(q));
+  if(f) list=list.filter(t=>t.tarea===f);
+  if(!list.length){el.innerHTML='<div class="empty"><span class="empty-icon">📂</span><div class="empty-txt">Sin tareas.'+(!tarCache.length?' Usa Sync.':'')+'</div></div>';return;}
+  el.innerHTML=list.map((t,i)=>`
+    <div class="tarrow">
+      <div class="tarrow-top">
+        <span class="tartag">${t.type==='pdf'?'📄':'🐍'} ${t.type.toUpperCase()}</span>
+        <span class="tarnm">${t.name} <span style="font-size:.65rem;color:var(--mut)">CI:${t.ci}</span></span>
+        <span style="font-size:.68rem;color:var(--mut)">${ls("pn_tt")[t.tarea]||t.tarea}</span>
+        ${t.nota!==undefined?`<span class="pill ${t.nota>=PASS?'pass':'fail'}">${t.nota.toFixed(1)}%</span>`:`<span class="pill pend">Sin nota</span>`}
+        <button class="btn sm" onclick="openCal(${i},true)" title="Ver archivo">👁</button>
+        <a href="${t.url}" target="_blank" class="btn sm" style="text-decoration:none" title="Ver en GitHub">🔗</a>
+        <button class="btn sm primary" onclick="openCal(${i},false)">✏️</button>
+      </div>
+      <div style="font-size:.68rem;color:var(--mut)">${t.filename} · ${t.date}${t.com?' · 💬 '+t.com:''}</div>
+    </div>`).join('');
+}
+
+let calIdx=-1;
+async function openCal(i, preview=false){
+  calIdx=i; const t=tarCache[i];
+  document.getElementById('mc-title').textContent='Calificar — '+t.tarea;
+  document.getElementById('mc-info').innerHTML=`<strong>${t.name}</strong> · CI: ${t.ci}<br>${t.filename} · ${t.date}`;
+  document.getElementById('mc-nota').value=t.nota!==undefined?t.nota:'';
+  document.getElementById('mc-com').value=t.com||'';
+  document.getElementById('mc-msg').className='msg'; document.getElementById('mc-msg').style.display='none';
+
+  // Configurar visor
+  const viewer=document.getElementById('mc-viewer');
+  const codeWrap=document.getElementById('mc-code-wrap');
+  const pdfWrap=document.getElementById('mc-pdf-wrap');
+  const noPreview=document.getElementById('mc-nopreview');
+  const ghLink=document.getElementById('mc-gh-link');
+  ghLink.href=t.url;
+
+  // Limpiar estado anterior
+  codeWrap.style.display='none'; pdfWrap.style.display='none'; noPreview.style.display='none';
+  document.getElementById('mc-pdf-frame').src='';
+  document.getElementById('mc-code').textContent='';
+
+  if(preview){
+    viewer.style.display='block';
+    if(t.type==='py'){
+      // Cargar código Python desde el body del issue de GitHub
+      await loadIssueCode(t._repo, t.ghN);
+    } else if(t.type==='pdf'){
+      const tFull = tarCache[calIdx];
+      if(tFull && tFull.fileUrl) {
+        pdfWrap.style.display='block';
+        document.getElementById('mc-pdf-frame').src = tFull.fileUrl;
+      } else {
+        noPreview.style.display='block';
+        noPreview.innerHTML='📄 El PDF está adjunto en el issue de GitHub. <br><a href="'+t.url+'" target="_blank" style="color:var(--blu)">Ver issue →</a>';
+      }
+    }
+  } else {
+    viewer.style.display='none';
+  }
+
+  document.getElementById('modal-cal').classList.remove('hidden');
+}
+
+async function loadIssueCode(repo, issueNum){
+  const codeWrap=document.getElementById('mc-code-wrap');
+  const noPreview=document.getElementById('mc-nopreview');
+  const codeEl=document.getElementById('mc-code');
+  const t=dtok()||tok();
+  codeEl.textContent='Cargando…';
+  codeWrap.style.display='block';
+  try{
+    const r=await fetch(`https://api.github.com/repos/${repo}/issues/${issueNum}`,{headers:GH(t)});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    const body=d.body||'';
+    // Extraer bloque ```python ... ```
+    const m=body.match(/```python\n([\s\S]*?)```/);
+    if(m){
+      codeEl.textContent=m[1].slice(0,4000)+(m[1].length>4000?'\n…(truncado)':'');
+    } else {
+      // Mostrar todo el body como fallback
+      codeEl.textContent=body.slice(0,2000)||(body?body:'(sin contenido)');
+    }
+  }catch(e){
+    codeWrap.style.display='none';
+    noPreview.style.display='block';
+    noPreview.innerHTML='⚠️ No se pudo cargar el código: '+e.message+'. <a href="https://github.com/'+repo+'/issues/'+issueNum+'" target="_blank" style="color:var(--blu)">Ver en GitHub →</a>';
+  }
+}
+
+function closeMod(){
+  document.getElementById('modal-cal').classList.add('hidden');
+  document.getElementById('mc-pdf-frame').src='';
+}
+async function saveCal(){
+  const nota=parseFloat(document.getElementById('mc-nota').value);
+  const com=document.getElementById('mc-com').value.trim();
+  const msg=document.getElementById('mc-msg');
+  if(isNaN(nota)||nota<0||nota>100){msg.className='msg err';msg.textContent='Nota inválida (0–100).';msg.style.display='block';return;}
+  const t=tarCache[calIdx], tk=dtok()||tok();
+  if(!tk){msg.className='msg err';msg.textContent='No hay token docente.';msg.style.display='block';return;}
+  msg.className='msg info'; msg.textContent='Guardando…'; msg.style.display='block';
+  const ok=await ghComment(t._repo,t.ghN,`Nota: ${nota}\n${com}`,tk);
+  if(ok){ tarCache[calIdx].nota=nota; tarCache[calIdx].com=com; msg.className='msg ok'; msg.textContent=`Nota ${nota}% guardada.`; msg.style.display='block'; setTimeout(()=>{closeMod();renderTar();},1000); }
+  else { msg.className='msg err'; msg.textContent='Error al guardar. Verifica el token.'; msg.style.display='block'; }
+}
+
+// ══════════════════════════════════════════════════════════
+//  EDITOR DE NOTAS QUIZ (docente)
+// ══════════════════════════════════════════════════════════
+function renderQuizEditor(){
+  const el=document.getElementById('qe-list');
+  if(!el) return;
+  const q=(document.getElementById('qe-search').value||'').toLowerCase();
+  const temaFilt=document.getElementById('qe-tema').value;
+  const ns=getNs();
+  const names=getNames();
+  const allowed=getAllow(); const hasWL=Object.keys(allowed).length>0;
+
+  // Recopilar todas las entradas (ci, key, nota)
+  let rows=[];
+  Object.entries(ns).forEach(([ci,quizzes])=>{
+    if(hasWL&&!allowed[ci]) return;
+    const nombre=names[ci]||allowed[ci]||'CI:'+ci;
+    Object.entries(quizzes).forEach(([key,nota])=>{
+      const [tema,qn]=key.split(':');
+      if(temaFilt&&tema!==temaFilt) return;
+      if(q&&!nombre.toLowerCase().includes(q)&&!ci.includes(q)) return;
+      const info=TEMAS[tema]||{names:{}};
+      const qnm=info.names[parseInt(qn)]||'Q'+qn;
+      rows.push({ci,nombre,tema,q:parseInt(qn),key,nota,label:info.label||tema,qnm});
+    });
+  });
+
+  if(!rows.length){
+    el.innerHTML='<div class="empty"><span class="empty-icon">📋</span><div class="empty-txt">No hay notas.'+(!Object.keys(ns).length?' Usa Sync primero.':'')+'</div></div>';
+    return;
+  }
+
+  // Ordenar por nombre, luego tema, luego quiz
+  rows.sort((a,b)=>a.nombre.localeCompare(b.nombre)||a.tema.localeCompare(b.tema)||a.q-b.q);
+
+  // Agrupar por estudiante
+  const byCI={};
+  rows.forEach(r=>{
+    if(!byCI[r.ci]) byCI[r.ci]={nombre:r.nombre,ci:r.ci,rows:[]};
+    byCI[r.ci].rows.push(r);
+  });
+
+  el.innerHTML=Object.values(byCI).map(s=>`
+    <div style="background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r2);padding:.75rem .9rem;margin-bottom:.5rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;flex-wrap:wrap;gap:.4rem">
+        <div>
+          <span style="font-weight:700;font-size:.82rem">${s.nombre}</span>
+          <span style="font-size:.65rem;color:var(--mut);font-family:'DM Mono',monospace;margin-left:.5rem">CI:${s.ci}</span>
+        </div>
+        <button class="btn sm primary" onclick="openQuizMod('${s.ci}')">+ Editar</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:.3rem">
+        ${s.rows.map(r=>`
+          <div style="background:var(--bg4);border-radius:5px;padding:.3rem .6rem;font-size:.7rem;display:flex;align-items:center;gap:.4rem;cursor:pointer" onclick="openQuizMod('${r.ci}','${r.tema}',${r.q})" title="Editar">
+            <span style="color:var(--mut)">${r.label} Q${r.q}</span>
+            <span style="font-family:'DM Mono',monospace;font-weight:700;color:var(--${r.nota>=PASS?'grn':'red'})">${r.nota.toFixed(1)}%</span>
+            <span style="color:var(--mut);font-size:.6rem">✏️</span>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function openQuizMod(ci='', tema='', qnum=0){
+  document.getElementById('mq-ci').value=ci;
+  document.getElementById('mq-tema').value=tema;
+  document.getElementById('mq-nueva').value='';
+  document.getElementById('mq-msg').className='msg'; document.getElementById('mq-msg').style.display='none';
+  onMqCi();
+  onMqTema();
+  if(qnum){
+    document.getElementById('mq-q').value=qnum;
+    onMqQ();
+  }
+  document.getElementById('modal-quiz').classList.remove('hidden');
+}
+
+function closeQuizMod(){ document.getElementById('modal-quiz').classList.add('hidden'); }
+
+function onMqCi(){
+  const ci=document.getElementById('mq-ci').value.trim();
+  const names=getNames(); const allowed=getAllow();
+  const nm=names[ci]||allowed[ci]||'';
+  const wrap=document.getElementById('mq-name-wrap');
+  if(nm){ wrap.style.display='block'; document.getElementById('mq-name').value=nm; }
+  else { wrap.style.display='none'; }
+  onMqQ();
+}
+
+function onMqTema(){
+  const tema=document.getElementById('mq-tema').value;
+  const sel=document.getElementById('mq-q');
+  sel.innerHTML='<option value="">— Quiz —</option>';
+  if(!tema) return;
+  const info=TEMAS[tema]||{names:{}};
+  for(let q=1;q<=10;q++){
+    const opt=document.createElement('option');
+    opt.value=q; opt.textContent=`Q${q} — ${info.names[q]||'Quiz '+q}`;
+    sel.appendChild(opt);
+  }
+  onMqQ();
+}
+
+function onMqQ(){
+  const ci=document.getElementById('mq-ci').value.trim();
+  const tema=document.getElementById('mq-tema').value;
+  const qn=parseInt(document.getElementById('mq-q').value);
+  const curEl=document.getElementById('mq-cur');
+  if(ci&&tema&&qn){
+    const cur=getNota(ci,tema+':'+qn);
+    curEl.value=cur!==undefined?cur.toFixed(1)+'%':'Sin nota';
+  } else { curEl.value='—'; }
+}
+
+document.getElementById('mq-q').addEventListener('change', onMqQ);
+
+async function saveQuizNota(){
+  const ci=document.getElementById('mq-ci').value.trim();
+  const tema=document.getElementById('mq-tema').value;
+  const qn=parseInt(document.getElementById('mq-q').value);
+  const nueva=parseFloat(document.getElementById('mq-nueva').value);
+  const msg=document.getElementById('mq-msg');
+  msg.style.display='none';
+  if(!ci){msg.className='msg err';msg.textContent='Ingresa un CI.';msg.style.display='block';return;}
+  if(!tema||!qn){msg.className='msg err';msg.textContent='Selecciona tema y quiz.';msg.style.display='block';return;}
+  if(isNaN(nueva)||nueva<0||nueva>100){msg.className='msg err';msg.textContent='Nota inválida (0–100).';msg.style.display='block';return;}
+
+  const tk=dtok()||tok();
+  const rp=repos();
+  const names=getNames(); const allowed=getAllow();
+  const nm=names[ci]||allowed[ci]||ci;
+
+  if(!tk||!rp.length){
+    // Sin GitHub: solo local (fallback)
+    setNota(ci,tema+':'+qn,nueva);
+    msg.className='msg ok'; msg.textContent=`✓ Guardado localmente (sin GitHub). ${nm} · Q${qn} = ${nueva}%`; msg.style.display='block';
+    onMqQ(); renderQuizEditor(); setTimeout(closeQuizMod,1400); return;
+  }
+
+  msg.className='msg info'; msg.textContent='Publicando en GitHub…'; msg.style.display='block';
+  const repo=rp[0];
+  const date=new Date().toLocaleString('es-BO');
+  const info=TEMAS[tema]||{names:{}};
+  const qnm=info.names[qn]||'Q'+qn;
+
+  // Cerrar issues anteriores del mismo CI+tema+Q con label quiz-nota (corrección)
+  await closeOldQuizIssues(repo, ci, tema, qn, tk);
+
+  // Crear nuevo issue con formato compatible con parseMeta/detectTema
+  const jsonRec=JSON.stringify({
+    nm, ci, nota:nueva, quizzes:String(qn),
+    tema, date, editado_por:'docente'
+  }, null, 2);
+  const body=[
+    `## Nota Quiz — ${info.label||tema} Q${qn}`,``,
+    `| Campo | Valor |`,`|---|---|`,
+    `| **Nombre** | ${nm} |`,
+    `| **CI** | ${ci} |`,
+    `| **Nota** | ${nueva} |`,
+    `| **Quizzes** | ${qn} |`,
+    `| **Fecha** | ${date} |`,
+    ``,`\`\`\`json`,jsonRec,`\`\`\``
+  ].join('\n');
+  const title=`[Quiz][${tema}] ${nm} · CI:${ci} · ${nueva}% · Q${qn} · ${date}`;
+
+  try{
+    await ghCreateIssue(repo, title, body, ['quiz-nota'], tk);
+    // También actualizar local para reflejo inmediato
+    setNota(ci, tema+':'+qn, nueva);
+    msg.className='msg ok'; msg.textContent=`✓ ${nm} · ${info.label||tema} Q${qn} = ${nueva}% — publicado en GitHub`; msg.style.display='block';
+    onMqQ(); renderQuizEditor(); setTimeout(closeQuizMod,1400);
+  }catch(e){
+    msg.className='msg err'; msg.textContent='Error GitHub: '+e.message; msg.style.display='block';
+  }
+}
+
+async function delQuizNota(){
+  const ci=document.getElementById('mq-ci').value.trim();
+  const tema=document.getElementById('mq-tema').value;
+  const qn=parseInt(document.getElementById('mq-q').value);
+  const msg=document.getElementById('mq-msg');
+  if(!ci||!tema||!qn){msg.className='msg err';msg.textContent='Selecciona CI, tema y quiz.';msg.style.display='block';return;}
+  const cur=getNota(ci,tema+':'+qn);
+  if(cur===undefined){msg.className='msg err';msg.textContent='No hay nota guardada localmente.';msg.style.display='block';return;}
+  if(!confirm(`Borrar nota ${cur}% de CI:${ci} · ${tema} Q${qn}?\nEsto cerrará los issues correspondientes en GitHub.`)) return;
+
+  const tk=dtok()||tok();
+  const rp=repos();
+  msg.className='msg info'; msg.textContent='Eliminando…'; msg.style.display='block';
+
+  if(tk&&rp.length){
+    const n=await closeOldQuizIssues(rp[0], ci, tema, qn, tk);
+    msg.textContent=`Cerrando ${n} issue(s) en GitHub…`;
+  }
+
+  // Borrar local
+  setNota(ci, tema+':'+qn, null);
+  msg.className='msg ok'; msg.textContent=`Nota eliminada.`; msg.style.display='block';
+  onMqQ(); renderQuizEditor(); setTimeout(closeQuizMod,1000);
+}
+
+// Cierra (no borra) los issues quiz-nota de GitHub que coincidan con ci+tema+Q
+async function closeOldQuizIssues(repo, ci, tema, qn, tk){
+  let closed=0;
+  try{
+    const iss=await ghFetch(repo,'quiz-nota',tk);
+    for(const i of iss){
+      if(i.state==='closed') continue;
+      const m=i.title.match(/CI:([^\s·\u00B7]+)/);
+      if(!m||m[1].trim()!==ci) continue;
+      const rec=parseMeta(i); rec._title=i.title;
+      if(detectTema(rec)!==tema) continue;
+      const qstr=String(rec.quizzes||rec.quiz||'');
+      const qs=qstr.split(',').map(q=>parseInt(q)).filter(q=>!isNaN(q));
+      if(!qs.includes(qn)) continue;
+      // Cerrar el issue
+      await fetch(`https://api.github.com/repos/${repo}/issues/${i.number}`,{
+        method:'PATCH',
+        headers:{...GH(tk),'Content-Type':'application/json'},
+        body:JSON.stringify({state:'closed'})
+      });
+      closed++;
+    }
+  }catch(e){ console.warn('closeOldQuizIssues:',e); }
+  return closed;
+}
+
+// Sync
+function slog(txt,cls=''){
+  const el=document.getElementById('sy-log'); el.classList.add('on');
+  el.innerHTML+=`<div class="${cls}">${txt}</div>`; el.scrollTop=el.scrollHeight;
+}
+async function syncGH(){
+  const t=document.getElementById('sy-tok').value.trim();
+  const rps=document.getElementById('sy-rep').value.trim().split(',').map(s=>s.trim()).filter(Boolean);
+  const msg=document.getElementById('sy-msg');
+  if(!t){msg.className='msg err';msg.textContent='Ingresa el token.';msg.style.display='block';return;}
+  if(!rps.length){msg.className='msg err';msg.textContent='Ingresa al menos un repositorio.';msg.style.display='block';return;}
+  document.getElementById('sy-log').innerHTML='';
+  msg.className='msg info'; msg.textContent='Sincronizando…'; msg.style.display='block';
+  let nn=0, nt=0;
+  for(const repo of rps){
+    slog(`<b>── ${repo} ──</b>`,'linf');
+    const qi=await ghFetch(repo,'quiz-nota',t);
+    slog(`${qi.length} issues quiz-nota`);
+    // best: {ci+key -> {nota, ts, state}} — open beats closed, newest beats older
+    const best={};
+    for(const i of qi){
+      const rec=parseMeta(i); if(!rec.ci||!rec.nota||isNaN(rec.nota)){continue;}
+      const ci=rec.ci.trim(); if(rec.nm) svName(ci,rec.nm);
+      const nota=parseFloat(rec.nota);
+      rec._title=i.title;
+      const tema=detectTema(rec);
+      const ts=new Date(i.created_at).getTime();
+      const state=i.state||'open';
+      let qs=[]; const qstr=String(rec.quizzes||rec.quiz||'');
+      if(qstr) qs=qstr.split(',').map(q=>parseInt(q)).filter(q=>!isNaN(q)&&q>=1&&q<=10);
+      if(!qs.length){const cur=getNs()[ci]||{};for(let q=1;q<=10;q++){if(cur[tema+':'+q]===undefined){qs=[q];break;}}}
+      for(const q of qs){
+        const bk=ci+'|'+tema+':'+q;
+        const ex=best[bk];
+        const exScore=(ex?.state==='open'?1:0)*1e15+(ex?.ts||0);
+        const newScore=(state==='open'?1:0)*1e15+ts;
+        if(!ex||newScore>exScore) best[bk]={ci,nota,tema,q,ts,state,nm:rec.nm||''};
+      }
+    }
+    for(const [bk,{ci,nota,tema,q,nm}] of Object.entries(best)){
+      const key=tema+':'+q;
+      const ex=getNota(ci,key);
+      if(ex===undefined||nota!==ex){setNota(ci,key,nota);nn++;slog(`✓ ${nm||ci} [${tema}] Q${q}=${nota}%`,'lok');}
+      else slog(`↷ ${nm||ci} [${tema}] Q${q} ya tiene ${ex}%`);
+    }
+    const ti=await ghFetch(repo,'tarea-entrega',t);
+    slog(`${ti.length} issues tarea-entrega`);
+    const tgh=getTGH();
+    for(const i of ti){
+      const rec=parseMeta(i); if(!rec.ci) continue;
+      const ci=rec.ci.trim(); if(rec.nm) svName(ci,rec.nm);
+      if(!tgh[ci]) tgh[ci]=[];
+      const key=`${rec.tarea||'?'}|${rec.filename||i.title}|${rec.type||'pdf'}`;
+      const exists=tgh[ci].find(x=>`${x.tarea}|${x.filename}|${x.type}`===key);
+      // Leer nota del comentario más reciente
+      let nota=undefined, com='';
+      const cms=await ghComments(repo,i.number,t);
+      for(const c of [...cms].reverse()){
+        const mn=(c.body||'').match(/[Nn]ota[:\s]+(\d+(?:\.\d+)?)/);
+        if(mn){nota=parseFloat(mn[1]);com=c.body.replace(/[Nn]ota[:\s]+\d+(?:\.\d+)?/,'').trim();break;}
+      }
+      if(!exists){
+        tgh[ci].push({tarea:rec.tarea||'Tarea',filename:rec.filename||i.title,type:rec.type||'pdf',date:rec.date||new Date(i.created_at).toLocaleString('es-BO'),nota,com,url:i.html_url,ghN:i.number,_repo:repo});
+        nt++; slog(`✓ ${rec.nm||ci}: ${rec.tarea}`,'lok');
+      } else {
+        // Actualizar nota/comentario si cambió
+        const idx2=tgh[ci].indexOf(exists);
+        if(idx2>=0){ tgh[ci][idx2].nota=nota; tgh[ci][idx2].com=com; }
+        slog(`↷ ${rec.nm||ci}: ${rec.tarea} ya importada`);
+      }
+    }
+    svTGH(tgh);
+  }
+  msg.className='msg ok'; msg.textContent=`Sync: ${nn} notas · ${nt} tareas.`; msg.style.display='block';
+  slog(`<b>═══ FIN: ${nn} notas · ${nt} tareas ═══</b>`,'lok');
+}
+
+// ── Long press to unlock docente ─────────────────────────
+let lpI=null;
+function startLP(e){ e.preventDefault(); let el=0; lpI=setInterval(()=>{ el+=50; if(el>=2500){ clearInterval(lpI);lpI=null; document.getElementById('tab-docente').style.display=''; const t=Object.assign(document.createElement('div'),{textContent:'🎓 Panel docente disponible'}); Object.assign(t.style,{position:'fixed',bottom:'1.5rem',left:'50%',transform:'translateX(-50%)',background:'var(--bg2)',color:'var(--gold)',border:'1px solid var(--gold)',padding:'.65rem 1.3rem',borderRadius:'20px',fontSize:'.8rem',fontWeight:'600',zIndex:'300',whiteSpace:'nowrap'}); document.body.appendChild(t); setTimeout(()=>t.remove(),2500); } },50); }
+function cancelLP(){ clearInterval(lpI); lpI=null; }
+document.addEventListener('keydown',e=>{ if(e.ctrlKey&&e.shiftKey&&e.key==='D') document.getElementById('tab-docente').style.display=''; });
+
+
+
+
+// ── Init ──────────────────────────────────────────────────
+window.addEventListener('load',()=>{
+  const t=dtok()||tok(), rp=repos();
+  if(t&&document.getElementById('sy-tok')) document.getElementById('sy-tok').value=t;
+  if(rp.length&&document.getElementById('sy-rep')) document.getElementById('sy-rep').value=rp.join(', ');
+  if(dtok()){ document.getElementById('tab-docente').style.display=''; onDocOpen(); }
+});
+// ── PUNTOS EXTRA (Docente) ──────────────────────────────
+function renderExtraEditor(){
+  const el=document.getElementById('ex-list'); if(!el) return;
+  const q=(document.getElementById('ex-search').value||'').toLowerCase();
+  const extras=getExtra(); const names=getNames(); const allowed=getAllow();
+  const hasWL=Object.keys(allowed).length>0;
+  
+  let rows=[];
+  // Combinar estudiantes de todas las fuentes para poder asignarles puntos
+  const cis = new Set([...Object.keys(extras), ...Object.keys(names), ...Object.keys(allowed)]);
+  
+  cis.forEach(ci=>{
+    if(hasWL && !allowed[ci]) return;
+    const nombre = names[ci] || allowed[ci] || 'CI:'+ci;
+    const data = extras[ci] || {puntos:0, motivo:''};
+    if(q && !nombre.toLowerCase().includes(q) && !ci.includes(q)) return;
+    rows.push({ci, nombre, puntos:parseFloat(data.puntos)||0, motivo:data.motivo||''});
+  });
+
+  if(!rows.length){ el.innerHTML='<div class="empty"><span class="empty-icon">⭐</span><div class="empty-txt">No hay datos.</div></div>'; return; }
+  rows.sort((a,b)=>a.nombre.localeCompare(b.nombre));
+
+  el.innerHTML = rows.map(r=>`
+    <div style="background:var(--bg3);border:1px solid var(--bdr);border-radius:var(--r2);padding:.75rem .9rem;margin-bottom:.5rem;display:flex;align-items:center;justify-content:space-between;gap:.8rem">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:.82rem">${r.nombre} <span style="font-size:.65rem;color:var(--mut);font-family:'DM Mono',monospace;margin-left:.4rem">CI:${r.ci}</span></div>
+        <div style="font-size:.7rem;color:var(--mut);margin-top:.15rem">${r.motivo || 'Sin motivo'}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'DM Mono',monospace;font-weight:700;color:var(--gold);font-size:1rem">${r.puntos > 0 ? '+'+r.puntos.toFixed(1) : '0.0'}</div>
+        <button class="btn sm" onclick="openExtraMod('${r.ci}')" style="margin-top:.3rem">✏️ Editar</button>
+      </div>
+    </div>`).join('');
+}
+
+function openExtraMod(ci=''){
+  document.getElementById('me-ci').value=ci;
+  document.getElementById('me-puntos').value='';
+  document.getElementById('me-motivo').value='';
+  document.getElementById('me-msg').style.display='none';
+  onMeCi();
+  if(ci){
+    const data = getExtra()[ci];
+    if(data){
+      document.getElementById('me-puntos').value = data.puntos;
+      document.getElementById('me-motivo').value = data.motivo;
+    }
+  }
+  document.getElementById('modal-extra').classList.remove('hidden');
+}
+function closeExtraMod(){ document.getElementById('modal-extra').classList.add('hidden'); }
+
+function onMeCi(){
+  const ci=document.getElementById('me-ci').value.trim();
+  const nm=getNames()[ci]||getAllow()[ci]||'';
+  const wrap=document.getElementById('me-name-wrap');
+  if(nm){ wrap.style.display='block'; document.getElementById('me-name').value=nm; }
+  else { wrap.style.display='none'; }
+}
+
+function saveExtra(){
+  const ci=document.getElementById('me-ci').value.trim();
+  const pts=parseFloat(document.getElementById('me-puntos').value);
+  const mot=document.getElementById('me-motivo').value.trim();
+  const msg=document.getElementById('me-msg');
+  if(!ci || isNaN(pts)){ msg.className='msg err'; msg.textContent='Ingresa CI y puntos.'; msg.style.display='block'; return; }
+  
+  const extras = getExtra();
+  extras[ci] = {puntos:pts, motivo:mot};
+  svExtra(extras);
+  
+  msg.className='msg ok'; msg.textContent='✓ Puntos extra guardados.'; msg.style.display='block';
+  renderExtraEditor();
+  setTimeout(closeExtraMod, 1000);
+}
+
+function delExtra(){
+  const ci=document.getElementById('me-ci').value.trim();
+  if(!ci) return;
+  if(!confirm('Eliminar puntos extra de este estudiante?')) return;
+  const extras = getExtra();
+  delete extras[ci];
+  svExtra(extras);
+  renderExtraEditor();
+  closeExtraMod();
+}
+</script>
+</body>
+</html>
