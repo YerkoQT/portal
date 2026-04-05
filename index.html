@@ -359,6 +359,7 @@ const DOC_PASS = 'analisis2026';
 // clave: "TEMA:Q" ej. "misiles:1", "python:3"
 const TEMAS = {
   misiles: { label:'🚀 Misiles', names:{1:'Ec. Movimiento',2:'Masa Variable',3:'Masa Constante',4:'Tsiolkovsky',5:'Param. Beta',6:'Marte',7:'Euler',8:'Verlet',9:'euler_1',10:'verlet_2'} },
+  finitas: { label:'📈 Diferencias Finitas', names:{1:'Velocidad',2:'Betas',3:'Marte',4:'Masa',5:'Primer Orden',6:'Euler',7:'Segundo Orden',8:'Verlet',9:'Cuarto Orden',10:'Rk4'} },
   python:  { label:'🐍 Python',  names:{1:'Tipos y Variables',2:'Arrays',3:'Funciones',4:'Bucles',5:'NumPy',6:'Pandas',7:'Traza',8:'Error',9:'Euler',10:'Derivada'} },
   rk4:     { label:'⚛️ RK4',     names:{1:'Fund. RK4',2:'RK4 Básico',3:'Carbono-14',4:'Torio-234',5:'Vectorial',6:'Paso h',7:'Cálculo',8:'Conserv.',9:'Código',10:'Orden'} },
   series:  { label:'📐 Series',  names:{1:'Series Trig.',2:'Coseno',3:'Límites',4:'Centrada',5:'Stencil',6:'Stencil 7p',7:'Taylor',8:'Error',9:'Roll',10:'Log-Log'} },
@@ -371,6 +372,7 @@ const QN = TEMAS.misiles.names;
 function detectTema(rec){
   // Prioridad 1: campo tema en el JSON del issue
   const t=(rec.tema||'').toLowerCase();
+  if(t==='finitas')  return 'finitas';
   if(t==='python')  return 'python';
   if(t==='rk4')     return 'rk4';
   if(t==='series')  return 'series';
@@ -381,6 +383,7 @@ function detectTema(rec){
   const tm=title.match(/\[Quiz\]\[([a-z]+)\]/i);
   if(tm){
     const tk=tm[1].toLowerCase();
+    if(tk==='finitas')  return 'finitas';
     if(tk==='python')  return 'python';
     if(tk==='rk4')     return 'rk4';
     if(tk==='series')  return 'series';
@@ -388,6 +391,7 @@ function detectTema(rec){
   }
   // Prioridad 3: inferir del título
   const tl=title.toLowerCase();
+  if(tl.includes('finitas'))  return 'finitas';
   if(tl.includes('python'))  return 'python';
   if(tl.includes('rk4'))     return 'rk4';
   if(tl.includes('series')||tl.includes('stencil')) return 'series';
